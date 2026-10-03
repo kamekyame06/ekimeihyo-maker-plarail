@@ -1,0 +1,1937 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>駅名標メーカー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<style id="pageStyle"></style>
+<style>
+:root{--bg:#eceff3;--panel:#fff;--line:#d9dde3;--text:#1f2328;--muted:#6b7280;--acc:#0b7a3e;--accbg:#e7f4ec;--sel:#2563eb;--danger:#c0392b}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:13px/1.5 "Noto Sans JP","Yu Gothic UI","Meiryo",sans-serif}
+header{height:48px;display:flex;align-items:center;gap:12px;padding:0 16px;background:#1f2a36;color:#fff}
+header h1{font-size:16px;margin:0;font-weight:700;letter-spacing:.05em}
+header .logo{display:inline-block;width:26px;height:18px;border:2px solid #fff;border-radius:3px;position:relative}
+header .logo::after{content:"";position:absolute;left:0;right:0;bottom:2px;height:4px;background:#80c241}
+header .sub{color:#9fb0c2;font-size:12px}
+.app{display:grid;grid-template-columns:310px minmax(0,1fr) 320px;height:calc(100% - 48px)}
+aside{background:var(--panel);overflow:auto;border-right:1px solid var(--line)}
+aside.right{border-right:0;border-left:1px solid var(--line);display:flex;flex-direction:column}
+main{display:flex;flex-direction:column;min-width:0;min-height:0}
+.toolbar{display:flex;flex-wrap:wrap;gap:4px;padding:6px 8px;background:var(--panel);border-bottom:1px solid var(--line);align-items:center}
+.toolbar .sep{width:1px;height:22px;background:var(--line);margin:0 4px}
+.toolbar .grow{flex:1}
+.canvasWrap{flex:1;overflow:auto;padding:28px;min-height:0;background-color:#e3e7ec;background-image:linear-gradient(45deg,#dde2e8 25%,transparent 25%,transparent 75%,#dde2e8 75%),linear-gradient(45deg,#dde2e8 25%,transparent 25%,transparent 75%,#dde2e8 75%);background-size:20px 20px;background-position:0 0,10px 10px}
+.canvasInner{display:flex;min-width:100%;min-height:100%;align-items:center;justify-content:center}
+#stage{display:block;box-shadow:0 2px 14px rgba(0,0,0,.18);touch-action:none;user-select:none;flex:none}
+.status{padding:4px 10px;font-size:12px;color:var(--muted);background:var(--panel);border-top:1px solid var(--line);display:flex;gap:16px}
+button,.btn{font:inherit;padding:4px 10px;border:1px solid #c5cbd3;background:#fff;border-radius:6px;cursor:pointer;color:var(--text);white-space:nowrap}
+button:hover{background:#f3f5f8}
+button.primary{background:var(--acc);border-color:var(--acc);color:#fff}
+button.primary:hover{filter:brightness(1.1)}
+button.danger{color:var(--danger)}
+button.on{background:var(--accbg);border-color:var(--acc);color:var(--acc)}
+button.icon{padding:4px 7px;min-width:28px}
+button:disabled{opacity:.4;cursor:default}
+input,select,textarea{font:inherit;color:var(--text);border:1px solid #c5cbd3;border-radius:5px;padding:3px 6px;background:#fff;min-width:0}
+input[type=color]{padding:0 2px;height:26px;width:40px;cursor:pointer}
+input[type=checkbox]{width:auto}
+textarea{width:100%;resize:vertical}
+.tabs{display:flex;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel);z-index:2}
+.tabs button{flex:1;border:0;border-radius:0;padding:10px 4px;border-bottom:3px solid transparent;background:none}
+.tabs button.active{border-bottom-color:var(--acc);color:var(--acc);font-weight:700}
+.tabpane{display:none;padding:12px}
+.tabpane.active{display:block}
+h3{font-size:13px;margin:16px 0 6px;padding-bottom:3px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:6px}
+h3:first-child{margin-top:0}
+h3 .sw{width:12px;height:12px;border-radius:2px;display:inline-block}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px 8px}
+.row{display:flex;flex-direction:column;gap:2px}
+.row>span{font-size:11px;color:var(--muted)}
+.row input:not([type=color]):not([type=checkbox]),.row select{width:100%}
+.row.full{grid-column:1/-1}
+.row.chk{flex-direction:row;align-items:center;gap:6px}
+.colorf{display:flex;gap:4px}
+.colorf select{flex:1}
+.hint{font-size:11px;color:var(--muted);margin:4px 0}
+.btnrow{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}
+.list{border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.list .item{display:flex;align-items:center;gap:6px;padding:5px 8px;border-bottom:1px solid var(--line)}
+.list .item:last-child{border-bottom:0}
+.list .item .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.list .empty{padding:8px;color:var(--muted);font-size:12px}
+.layers{flex:0 0 auto;max-height:38%;overflow:auto;border-bottom:1px solid var(--line)}
+.layers .head,.props .head{display:flex;align-items:center;gap:4px;padding:8px 10px;font-weight:700;position:sticky;top:0;background:var(--panel);z-index:1;border-bottom:1px solid var(--line)}
+.layers .head .grow{flex:1}
+.layer{display:flex;align-items:center;gap:6px;padding:3px 10px;cursor:pointer;border-bottom:1px solid #f0f2f5}
+.layer:hover{background:#f6f8fa}
+.layer.sel{background:#e8efff}
+.layer .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.layer .ty{font-size:10px;color:var(--muted);width:30px}
+.layer .tg{border:0;background:none;padding:0 2px;cursor:pointer;opacity:.35;font-size:13px}
+.layer .tg.on{opacity:1}
+.layer.hid .nm{color:#aaa;text-decoration:line-through}
+.props{flex:1;overflow:auto}
+.props .body{padding:10px}
+.props fieldset{border:0;padding:0;margin:0 0 10px}
+.props legend{font-size:11px;font-weight:700;color:var(--acc);padding:0;margin-bottom:4px}
+.varbar{display:flex;gap:4px;margin-top:4px}
+.varbar select{flex:1}
+.stTable{width:100%;border-collapse:collapse;font-size:12px}
+.stTable td,.stTable th{border-bottom:1px solid var(--line);padding:3px 4px;text-align:left}
+.stTable tr:hover{background:#f6f8fa}
+dialog{border:0;border-radius:10px;padding:0;box-shadow:0 10px 40px rgba(0,0,0,.3);width:min(460px,94vw)}
+dialog::backdrop{background:rgba(0,0,0,.35)}
+dialog .dh{padding:12px 16px;font-weight:700;border-bottom:1px solid var(--line)}
+dialog .db{padding:12px 16px}
+dialog .df{padding:10px 16px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:6px}
+.note{background:#fff8e1;border:1px solid #f1d58a;border-radius:6px;padding:6px 8px;font-size:12px;margin-top:8px}
+.dropdown{position:relative;display:inline-block}
+.dropdown .menu{display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid var(--line);border-radius:6px;box-shadow:0 4px 14px rgba(0,0,0,.15);z-index:20;padding:4px;grid-template-columns:repeat(4,44px);gap:3px}
+.dropdown.open .menu{display:grid}
+.dropdown .menu button{padding:3px;height:36px;display:grid;place-items:center}
+#printArea{display:none}
+@media print{
+  html,body{height:auto;background:#fff;margin:0;padding:0}
+  body>*:not(#printArea){display:none!important}
+  #printArea{display:block}
+  .page{position:relative;overflow:hidden;break-after:page;page-break-after:always}
+  .page:last-child{break-after:auto;page-break-after:auto}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+@media (max-width:1100px){
+  .app{grid-template-columns:1fr;height:auto}
+  aside{border:0;border-bottom:1px solid var(--line)}
+  .canvasWrap{min-height:320px}
+  .layers{max-height:240px}
+}
+</style>
+</head>
+<body>
+<header>
+  <span class="logo"></span>
+  <h1>駅名標メーカー</h1>
+  <span class="sub">レイアウトを自由に作ってテンプレート化 → 駅名を入れるだけで量産・PDF印刷</span>
+</header>
+
+<div class="app">
+  <!-- ========== 左パネル ========== -->
+  <aside class="left">
+    <div class="tabs">
+      <button data-tab="data" class="active">駅データ</button>
+      <button data-tab="tpl">テンプレート</button>
+      <button data-tab="batch">一括作成</button>
+    </div>
+
+    <div class="tabpane active" id="tab-data">
+      <h3>路線</h3>
+      <div class="grid2" id="lineForm"></div>
+      <div id="stationForms"></div>
+      <div class="btnrow">
+        <button id="swapBtn">⇄ 左右の駅を入れ替え</button>
+        <button id="clearData">駅データをクリア</button>
+      </div>
+      <p class="hint">テキスト要素に <code>{cur.ja}</code> のような変数を書くと、ここで入力した値に置き換わります（右パネルの「変数を挿入」から選べます）。</p>
+    </div>
+
+    <div class="tabpane" id="tab-tpl">
+      <h3>現在のテンプレート</h3>
+      <div class="row"><span>テンプレート名</span><input id="tplName"></div>
+      <div class="btnrow">
+        <button class="primary" id="tplSave">上書き保存</button>
+        <button id="tplSaveAs">名前を付けて保存</button>
+        <button id="tplNew">白紙から作成</button>
+      </div>
+      <h3>保存済みテンプレート</h3>
+      <div class="list" id="tplList"></div>
+      <h3>プリセット</h3>
+      <div class="list" id="presetList"></div>
+      <h3>ファイル入出力</h3>
+      <div class="btnrow">
+        <button id="tplExport">このテンプレートを書き出し</button>
+        <button id="tplExportAll">全テンプレートを書き出し</button>
+        <button id="tplImport">読み込み…</button>
+        <input type="file" id="tplImportFile" accept=".json,application/json" hidden>
+      </div>
+      <p class="hint">テンプレートはこのブラウザ内（localStorage）に保存されます。別のPCで使う時や共有する時はJSONで書き出してください。</p>
+    </div>
+
+    <div class="tabpane" id="tab-batch">
+      <h3>駅リスト（路線順に1行1駅）</h3>
+      <p class="hint">書式：<b>漢字, かな, 英語, 路線記号, 駅番号, 中国語, 韓国語, 特定都区市内</b><br>（2列目以降は省略可。カンマまたはタブ区切り。Excelから貼り付けOK）</p>
+      <textarea id="batchText" rows="10" spellcheck="false"></textarea>
+      <div class="grid2" style="margin-top:6px">
+        <label class="row"><span>向き</span>
+          <select id="batchDir">
+            <option value="fwd">順方向（左＝前の行の駅）</option>
+            <option value="rev">逆方向（左＝次の行の駅）</option>
+            <option value="both">両方向とも作る</option>
+          </select></label>
+        <label class="row chk" style="align-self:end"><input type="checkbox" id="batchLoop"><span style="font-size:12px;color:var(--text)">環状線（端を繋ぐ）</span></label>
+      </div>
+      <div class="btnrow">
+        <button class="primary" id="batchPrint">全駅をPDF印刷…</button>
+        <button class="danger" id="batchResetAll" style="display:none">個別調整をすべて削除</button>
+      </div>
+      <h3>駅一覧 <span class="hint" id="batchCount"></span></h3>
+      <p class="hint">「個別調整」で、その駅だけ文字の位置・大きさ・隣駅・色などを変えられます（テンプレート本体は変わりません）。チェックを外した駅は一括印刷しません。</p>
+      <table class="stTable" id="batchTable"></table>
+    </div>
+  </aside>
+
+  <!-- ========== 中央 ========== -->
+  <main>
+    <div class="toolbar">
+      <button data-add="text" title="テキストを追加">＋ テキスト</button>
+      <button data-add="rect" title="四角形を追加">▭ 四角</button>
+      <button data-add="ellipse" title="円を追加">◯ 円</button>
+      <button data-add="line" title="線を追加">╱ 線</button>
+      <div class="dropdown" id="shapeDrop"><button id="shapeBtn">◆ 図形 ▾</button><div class="menu" id="shapeMenu"></div></div>
+      <button id="addImage" title="画像（ロゴなど）を追加">🖼 画像</button>
+      <input type="file" id="imageFile" accept="image/*" hidden>
+      <span class="sep"></span>
+      <button class="icon" id="undoBtn" title="元に戻す (Ctrl+Z)">↶</button>
+      <button class="icon" id="redoBtn" title="やり直す (Ctrl+Y)">↷</button>
+      <span class="sep"></span>
+      <button class="icon" id="zoomOut" title="縮小">−</button>
+      <button id="zoomFit" title="画面に合わせる">全体</button>
+      <button class="icon" id="zoomIn" title="拡大">＋</button>
+      <span class="sep"></span>
+      <button id="gridBtn" title="グリッド表示">グリッド</button>
+      <button id="snapBtn" title="グリッドに吸着">吸着</button>
+      <span class="grow"></span>
+      <button id="svgBtn" title="SVGで保存">SVG保存</button>
+      <button class="primary" id="printBtn">🖨 PDF印刷</button>
+    </div>
+    <div id="indivBar" style="display:none;background:#fff3cd;border-bottom:1px solid #f1d58a;padding:6px 10px;align-items:center;gap:6px;flex-wrap:wrap">
+      <b>✎ 個別調整中：<span id="indivName"></span></b>
+      <span class="hint" style="margin:0">ここでの変更（文字・図形・駅データ・色）はこの駅だけに反映されます</span>
+      <span style="flex:1"></span>
+      <button id="indivPrev">◀ 前の駅</button><button id="indivNext">次の駅 ▶</button>
+      <button class="danger" id="indivReset">この駅の調整をリセット</button>
+      <button class="primary" id="indivExit">終了してテンプレート編集に戻る</button>
+    </div>
+    <div class="canvasWrap" id="canvasWrap"><div class="canvasInner"><svg id="stage" xmlns="http://www.w3.org/2000/svg"></svg></div></div>
+    <div class="status"><span id="stSize"></span><span id="stPos"></span><span id="stZoom"></span><span id="stSave"></span></div>
+  </main>
+
+  <!-- ========== 右パネル ========== -->
+  <aside class="right">
+    <div class="layers">
+      <div class="head"><span class="grow">レイヤー</span>
+        <button class="icon" id="lyUp" title="前面へ">▲</button>
+        <button class="icon" id="lyDown" title="背面へ">▼</button>
+        <button class="icon" id="lyDup" title="複製 (Ctrl+D)">⧉</button>
+        <button class="icon danger" id="lyDel" title="削除 (Delete)">🗑</button>
+      </div>
+      <div id="layerList"></div>
+    </div>
+    <div class="props">
+      <div class="head" id="propsHead">プロパティ</div>
+      <div class="body" id="propsBody"></div>
+    </div>
+  </aside>
+</div>
+
+<dialog id="printDlg">
+  <div class="dh">PDF印刷</div>
+  <div class="db">
+    <div class="grid2">
+      <label class="row full"><span>印刷する駅</span>
+        <select id="prTarget">
+          <option value="current">現在編集中の駅（1枚）</option>
+          <option value="batch">一括作成リストの全駅</option>
+        </select></label>
+      <label class="row"><span>用紙</span>
+        <select id="prPaper">
+          <option value="sign">駅名標サイズ（実寸）</option>
+          <option value="A4">A4</option><option value="A3">A3</option>
+          <option value="B4">B4</option><option value="B5">B5</option>
+          <option value="A5">A5</option><option value="A2">A2</option>
+        </select></label>
+      <label class="row"><span>向き</span>
+        <select id="prOrient"><option value="landscape">横</option><option value="portrait">縦</option></select></label>
+      <label class="row"><span>配置</span>
+        <select id="prMode">
+          <option value="fit">用紙に合わせて拡大縮小</option>
+          <option value="multi">用紙に並べて複数面付け</option>
+          <option value="actual">実寸（大きい場合は分割）</option>
+          <option value="tent">三角柱POP（四つ折りで立てる）</option>
+          <option value="tent2">三角POP（上下のりしろ型）</option>
+          <option value="card">名刺用紙・ラベル用紙（面付け）</option>
+        </select></label>
+      <label class="row"><span>余白 (mm)</span><input type="number" id="prMargin" min="0" step="1"></label>
+      <label class="row"><span>駅名標の実寸 横幅 (mm)</span><input type="number" id="prWidth" min="10" step="1"></label>
+      <label class="row"><span>高さ (mm)</span><input id="prHeight" disabled></label>
+      <label class="row chk full" id="prCropRow"><input type="checkbox" id="prCrop"><span style="font-size:12px;color:var(--text)">トンボ（切り取り線）を入れる</span></label>
+    </div>
+    <div class="grid2" id="tentOpts" style="margin-top:8px;padding:8px;border:1px solid var(--line);border-radius:8px;background:#f8faf9">
+      <label class="row full"><span>三角柱の裏面（反対側から見た面）</span>
+        <select id="prTentBack">
+          <option value="swap">左右の駅を入れ替えて印刷（反対ホームから見た向き）</option>
+          <option value="same">表と同じ駅名標を印刷</option>
+          <option value="none">何も印刷しない</option>
+        </select></label>
+      <label class="row tent2only"><span>のりしろの高さ（上下各）mm</span><input type="number" id="prTentGlue" min="0" step="1"></label>
+      <label class="row tent2only"><span>駅名標の面の高さ mm</span><input type="number" id="prTentFace" min="10" step="1"></label>
+      <label class="row"><span>面の内側の余白 (mm)</span><input type="number" id="prTentPad" min="0" step="0.5"></label>
+      <label class="row chk" style="align-self:end"><input type="checkbox" id="prTentFill"><span style="font-size:12px;color:var(--text)">面全体を背景色で塗る</span></label>
+      <div class="full hint" id="tentDiagram" style="grid-column:1/-1;margin:0"></div>
+    </div>
+    <div class="grid2" id="cardOpts" style="margin-top:8px;padding:8px;border:1px solid var(--line);border-radius:8px;background:#f8faf9">
+      <label class="row full"><span>用紙の規格（よく使うもの）</span>
+        <select id="cdPreset">
+          <option value="">— 選ぶと下の寸法が入ります —</option>
+          <option value="91,55,2,5,14,11,0,0">A4 名刺 10面（91×55mm／左14・上11）</option>
+          <option value="91,55,2,5,14,11.5,0,0">A4 名刺 10面（91×55mm／左14・上11.5）</option>
+          <option value="86,54,2,5,19,13.5,0,0">A4 カード 10面（86×54mm）</option>
+          <option value="70,42.3,3,7,0,0,0,0">A4 ラベル 21面（70×42.3mm）</option>
+          <option value="105,74.25,2,4,0,0,0,0">A4 8面（105×74.25mm・A4を8等分）</option>
+        </select></label>
+      <label class="row"><span>1面の幅 (mm)</span><input type="number" id="cdW" step="0.1" min="5"></label>
+      <label class="row"><span>1面の高さ (mm)</span><input type="number" id="cdH" step="0.1" min="5"></label>
+      <label class="row"><span>列数（横に並ぶ数）</span><input type="number" id="cdCols" step="1" min="1"></label>
+      <label class="row"><span>行数（縦に並ぶ数）</span><input type="number" id="cdRows" step="1" min="1"></label>
+      <label class="row"><span>左余白 (mm)</span><input type="number" id="cdLeft" step="0.1" min="0"></label>
+      <label class="row"><span>上余白 (mm)</span><input type="number" id="cdTop" step="0.1" min="0"></label>
+      <label class="row"><span>面の間隔 横 (mm)</span><input type="number" id="cdGapX" step="0.1" min="0"></label>
+      <label class="row"><span>面の間隔 縦 (mm)</span><input type="number" id="cdGapY" step="0.1" min="0"></label>
+      <label class="row"><span>面の内側の余白 (mm)</span><input type="number" id="cdPad" step="0.5" min="0"></label>
+      <label class="row"><span>印刷を始める位置（何面目から）</span><input type="number" id="cdStart" step="1" min="1"></label>
+      <label class="row full"><span>並べ方</span>
+        <select id="cdRepeat">
+          <option value="list">1面に1駅ずつ、順番に並べる</option>
+          <option value="sheet">1駅で1枚分（全面に同じ駅）</option>
+          <option value="fill">今の駅を全面に（1枚）</option>
+        </select></label>
+      <label class="row chk"><input type="checkbox" id="cdFill"><span style="font-size:12px;color:var(--text)">面全体を背景色で塗る</span></label>
+      <label class="row chk full"><input type="checkbox" id="cdGuide"><span style="font-size:12px;color:var(--text)"><b>切り取り線を印刷する</b>（ミシン目のない用紙や普通紙に印刷する時に）</span></label>
+      <label class="row full" id="cdCutRow"><span>切り取り線の種類</span>
+        <select id="cdCutStyle">
+          <option value="dash">点線（薄いグレー）</option>
+          <option value="solid">実線（細い黒）</option>
+          <option value="marks">トンボ（四隅のみ・駅名標にかからない）</option>
+        </select></label>
+      <div class="full hint" id="cardInfo" style="grid-column:1/-1;margin:0"></div>
+    </div>
+    <p class="hint" id="prInfo"></p>
+    <div class="note">印刷ダイアログで送信先を <b>「PDFに保存」</b> にするとPDFファイルになります。用紙サイズ・余白は自動設定されます（余白が出る場合は「余白：なし」、倍率は「100%」にしてください）。</div>
+  </div>
+  <div class="df"><button id="prCancel">キャンセル</button><button class="primary" id="prGo">印刷 / PDF保存</button></div>
+</dialog>
+
+<div id="printArea"></div>
+
+<script>
+'use strict';
+/* ================================================================
+   基本ユーティリティ
+   ================================================================ */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const SVGNS = 'http://www.w3.org/2000/svg';
+const uid = () => Math.random().toString(36).slice(2, 10);
+const clone = o => JSON.parse(JSON.stringify(o));
+const r2 = v => Math.round(v * 100) / 100;
+function mk(tag, attrs = {}) {
+  const n = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) if (attrs[k] != null && attrs[k] !== '') n.setAttribute(k, attrs[k]);
+  return n;
+}
+function h(tag, props = {}, ...kids) {
+  const n = document.createElement(tag);
+  for (const k in props) {
+    if (k === 'class') n.className = props[k];
+    else if (k.startsWith('on')) n.addEventListener(k.slice(2), props[k]);
+    else if (k in n && k !== 'list') n[k] = props[k];
+    else n.setAttribute(k, props[k]);
+  }
+  for (const c of kids) if (c != null) n.append(c);
+  return n;
+}
+function download(name, text, type = 'application/json') {
+  const a = h('a', { href: URL.createObjectURL(new Blob([text], { type })), download: name });
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+/* ================================================================
+   フォント
+   ================================================================ */
+const GFONTS = [
+  ['Noto Sans JP', 'wght@100..900'], ['M PLUS 1p', 'wght@100;300;400;500;700;800;900'],
+  ['BIZ UDPGothic', 'wght@400;700'], ['Zen Kaku Gothic New', 'wght@300;400;500;700;900'],
+  ['Zen Maru Gothic', 'wght@300;400;500;700;900'], ['Kosugi Maru', ''], ['Murecho', 'wght@100..900'],
+  ['Noto Serif JP', 'wght@200..900'], ['Roboto', 'wght@100..900'], ['Roboto Condensed', 'wght@100..900'],
+  ['Inter', 'wght@100..900'], ['Barlow', 'wght@300;400;500;600;700;800'], ['Overpass', 'wght@100..900'],
+  ['Noto Sans SC', 'wght@100..900'], ['Noto Sans KR', 'wght@100..900'],
+];
+for (const [f, w] of GFONTS) {
+  document.head.append(h('link', { rel: 'stylesheet', href: `https://fonts.googleapis.com/css2?family=${f.replace(/ /g, '+')}${w ? ':' + w : ''}&display=swap` }));
+}
+const SYSFONTS = ['Meiryo', 'Yu Gothic', 'Hiragino Sans', 'MS Gothic', 'Arial', 'Helvetica', 'Segoe UI'];
+const ALLFONTS = [...GFONTS.map(f => f[0]), ...SYSFONTS];
+const fontStack = f => `"${(f || 'Noto Sans JP').replace(/"/g, '')}", "Noto Sans JP", sans-serif`;
+
+/* テキスト幅の計測用（非表示SVG） */
+const measSvg = mk('svg', { width: 10, height: 10 });
+measSvg.style.cssText = 'position:absolute;left:-10000px;top:0;visibility:hidden';
+const measText = mk('text');
+measSvg.append(measText);
+document.body.append(measSvg);
+function measure(src, str) {
+  for (const a of ['font-family', 'font-size', 'font-weight', 'font-style', 'letter-spacing']) {
+    const v = src.getAttribute(a);
+    v == null ? measText.removeAttribute(a) : measText.setAttribute(a, v);
+  }
+  measText.textContent = str;
+  return measText.getComputedTextLength();
+}
+
+/* ================================================================
+   データ定義
+   ================================================================ */
+const FIELDS = [['ja', '駅名（漢字）'], ['kana', 'ひらがな'], ['en', '英語'], ['zh', '中国語'], ['ko', '韓国語'],
+  ['code', '路線記号'], ['no', '駅番号'], ['area', '特定都区市内'], ['note', '自由欄']];
+const ROLES = [['cur', '当駅', '#0b7a3e'], ['prev', '左の駅', '#2563eb'], ['next', '右の駅', '#c2410c']];
+const LINE_FIELDS = [['name', '路線名'], ['en', '路線名（英語）']];
+const BATCH_COLS = ['ja', 'kana', 'en', 'code', 'no', 'zh', 'ko', 'area'];
+const blankStation = () => Object.fromEntries(FIELDS.map(f => [f[0], '']));
+
+const DEFAULT_DATA = {
+  line: { name: '山手線', en: 'Yamanote Line', color: '#80c241', color2: '#1a1a1a', color3: '#80c241' },
+  cur: { ...blankStation(), ja: '新宿', kana: 'しんじゅく', en: 'Shinjuku', zh: '新宿', ko: '신주쿠', code: 'JY', no: '17', area: '山' },
+  prev: { ...blankStation(), ja: '代々木', kana: 'よよぎ', en: 'Yoyogi', code: 'JY', no: '18' },
+  next: { ...blankStation(), ja: '新大久保', kana: 'しんおおくぼ', en: 'Shin-Ōkubo', code: 'JY', no: '16' },
+};
+const DEFAULT_BATCH = `品川,しながわ,Shinagawa,JY,25
+大崎,おおさき,Ōsaki,JY,24
+五反田,ごたんだ,Gotanda,JY,23
+目黒,めぐろ,Meguro,JY,22
+恵比寿,えびす,Ebisu,JY,21
+渋谷,しぶや,Shibuya,JY,20
+原宿,はらじゅく,Harajuku,JY,19
+代々木,よよぎ,Yoyogi,JY,18
+新宿,しんじゅく,Shinjuku,JY,17,新宿,신주쿠,山`;
+
+const SAMPLE_HOKKAIDO_A = {
+  line: { name: '函館線', en: 'Hakodate Line', color: '#4fb848', color2: '#1a1a1a', color3: '#f0883a' },
+  cur: { ja: '野幌', kana: 'のっぽろ', en: 'Nopporo', code: 'A', no: '07' },
+  prev: { ja: '大麻', kana: 'おおあさ', en: 'Ōasa', code: 'A', no: '06' },
+  next: { ja: '高砂', kana: 'たかさご', en: 'Takasago', code: 'A', no: '08' },
+};
+const SAMPLE_HOKKAIDO_S = {
+  line: { name: '函館線', en: 'Hakodate Line', color: '#5cc11e', color2: '#1a1a1a', color3: '#c8102e' },
+  cur: { ja: '手稲', kana: 'ていね', en: 'Teine', code: 'S', no: '07', area: '札' },
+  prev: { ja: '稲穂', kana: 'いなほ', en: 'Inaho', code: 'S', no: '08' },
+  next: { ja: '稲積公園', kana: 'いなづみこうえん', en: 'Inazumikōen', code: 'S', no: '06' },
+};
+const SAMPLE_HOKKAIDO_POP = {
+  line: { name: '函館線', en: 'Hakodate Line', color: '#3cb44b', color2: '#1a1a1a', color3: '#f0883a' },
+  cur: { ja: '札幌', kana: 'さっぽろ', en: 'Sapporo' },
+  prev: { ja: '桑園', kana: 'そうえん', en: 'Sōen' },
+  next: { ja: '苗穂', kana: 'なえぼ', en: 'Naebo' },
+};
+
+const TYPE_LABEL = { text: 'テキスト', rect: '四角形', ellipse: '円', line: '線', shape: '図形', image: '画像' };
+const DEFAULTS = {
+  text: { name: 'テキスト', text: 'テキスト', font: 'Noto Sans JP', size: 60, weight: 700, italic: false, color: '#1a1a1a', anchor: 'middle', letterSpacing: 0, lineHeight: 1.2, maxWidth: 0, fit: 'shrink', strokeColor: '#ffffff', strokeWidth: 0 },
+  rect: { name: '四角形', w: 200, h: 100, rx: 0, fill: '@line', stroke: '#1a1a1a', strokeWidth: 0 },
+  ellipse: { name: '円', w: 120, h: 120, fill: '#ffffff', stroke: '@line', strokeWidth: 10 },
+  shape: { name: '図形', preset: 'tri-right', points: '0,0 100,50 0,100', w: 60, h: 60, fill: '#1a1a1a', stroke: '#1a1a1a', strokeWidth: 0 },
+  line: { name: '線', stroke: '#1a1a1a', strokeWidth: 6, cap: 'butt', dash: '' },
+  image: { name: '画像', href: '', w: 200, h: 200, preserve: 'xMidYMid meet' },
+};
+const COMMON = { rotation: 0, opacity: 1, showIf: '', hidden: false, locked: false };
+
+function starPts(n, inner) {
+  const p = [];
+  for (let i = 0; i < n * 2; i++) {
+    const a = -Math.PI / 2 + i * Math.PI / n, r = i % 2 ? inner : 1;
+    p.push([.5 + .5 * r * Math.cos(a), .5 + .5 * r * Math.sin(a)]);
+  }
+  return p;
+}
+const SHAPES = {
+  'tri-left': ['三角（左）', [[1, 0], [0, .5], [1, 1]]],
+  'tri-right': ['三角（右）', [[0, 0], [1, .5], [0, 1]]],
+  'tri-up': ['三角（上）', [[0, 1], [.5, 0], [1, 1]]],
+  'tri-down': ['三角（下）', [[0, 0], [1, 0], [.5, 1]]],
+  'arrow-left': ['矢印（左）', [[0, .5], [.45, 0], [.45, .28], [1, .28], [1, .72], [.45, .72], [.45, 1]]],
+  'arrow-right': ['矢印（右）', [[1, .5], [.55, 0], [.55, .28], [0, .28], [0, .72], [.55, .72], [.55, 1]]],
+  'arrowt-left': ['細矢印（左）', [[0, .5], [.38, 0], [.52, 0], [.2, .42], [1, .42], [1, .58], [.2, .58], [.52, 1], [.38, 1]]],
+  'arrowt-right': ['細矢印（右）', [[1, .5], [.62, 0], [.48, 0], [.8, .42], [0, .42], [0, .58], [.8, .58], [.48, 1], [.62, 1]]],
+  'chev-left': ['山形（左）', [[.55, 0], [1, 0], [.45, .5], [1, 1], [.55, 1], [0, .5]]],
+  'chev-right': ['山形（右）', [[0, 0], [.45, 0], [1, .5], [.45, 1], [0, 1], [.55, .5]]],
+  'home-left': ['五角（左）', [[.25, 0], [1, 0], [1, 1], [.25, 1], [0, .5]]],
+  'home-right': ['五角（右）', [[0, 0], [.75, 0], [1, .5], [.75, 1], [0, 1]]],
+  'para': ['平行四辺形', [[.2, 0], [1, 0], [.8, 1], [0, 1]]],
+  'trap': ['台形', [[.2, 0], [.8, 0], [1, 1], [0, 1]]],
+  'diamond': ['ひし形', [[.5, 0], [1, .5], [.5, 1], [0, .5]]],
+  'hexagon': ['六角形', [[.25, 0], [.75, 0], [1, .5], [.75, 1], [.25, 1], [0, .5]]],
+  'octagon': ['八角形', [[.3, 0], [.7, 0], [1, .3], [1, .7], [.7, 1], [.3, 1], [0, .7], [0, .3]]],
+  'star': ['星', starPts(5, .42)],
+  'custom': ['カスタム', null],
+};
+function shapePoints(el) {
+  if (el.preset === 'custom') {
+    return String(el.points || '').trim().split(/\s+/).map(p => p.split(',').map(v => (+v || 0) / 100)).filter(p => p.length === 2);
+  }
+  return (SHAPES[el.preset] || SHAPES['tri-right'])[1];
+}
+
+function newEl(type, props = {}) {
+  return { id: uid(), type, ...COMMON, ...clone(DEFAULTS[type]), x: 0, y: 0, ...props };
+}
+const T = p => newEl('text', p), R = p => newEl('rect', p), E = p => newEl('ellipse', p), S = p => newEl('shape', p), L = p => newEl('line', p);
+
+/* ================================================================
+   プリセットテンプレート
+   ================================================================ */
+const PRESETS = [
+  () => ({
+    name: 'JR風（ナンバリング・帯）', w: 1200, h: 400, printW: 900, bg: '#ffffff',
+    elements: [
+      R({ name: 'ナンバリング外枠', x: 140, y: 52, w: 124, h: 150, rx: 18, fill: '#1a1a1a', showIf: 'has:cur.no' }),
+      R({ name: 'ナンバリング内枠', x: 152, y: 96, w: 100, h: 94, rx: 10, fill: '#ffffff', stroke: '@line', strokeWidth: 10, showIf: 'has:cur.no' }),
+      T({ name: '当駅 路線記号', text: '{cur.code}', x: 202, y: 74, size: 32, weight: 700, color: '#ffffff', font: 'Roboto', showIf: 'has:cur.no' }),
+      T({ name: '当駅 駅番号', text: '{cur.no}', x: 202, y: 143, size: 56, weight: 700, font: 'Roboto', maxWidth: 84, showIf: 'has:cur.no' }),
+      T({ name: '駅名（漢字）', text: '{cur.ja}', x: 640, y: 118, size: 128, weight: 700, maxWidth: 620 }),
+      T({ name: 'ひらがな', text: '{cur.kana}', x: 640, y: 206, size: 40, weight: 500, letterSpacing: 4, maxWidth: 620 }),
+      T({ name: '英語', text: '{cur.en}', x: 640, y: 252, size: 40, weight: 500, font: 'Roboto', maxWidth: 620 }),
+      R({ name: '特定都区市内 枠', x: 1040, y: 50, w: 54, h: 54, fill: 'none', stroke: '#1a1a1a', strokeWidth: 4, showIf: 'has:cur.area' }),
+      T({ name: '特定都区市内', text: '{cur.area}', x: 1067, y: 77, size: 38, weight: 700, showIf: 'has:cur.area' }),
+      R({ name: 'ライン帯', x: 0, y: 288, w: 1200, h: 40, fill: '@line', locked: true }),
+      R({ name: '帯中央', x: 540, y: 288, w: 120, h: 40, fill: '@line2' }),
+      S({ name: '左矢印', preset: 'tri-left', x: 556, y: 296, w: 22, h: 24, fill: '#ffffff', showIf: 'has:prev.ja' }),
+      S({ name: '右矢印', preset: 'tri-right', x: 622, y: 296, w: 22, h: 24, fill: '#ffffff', showIf: 'has:next.ja' }),
+      T({ name: '左駅 駅名', text: '{prev.ja}', x: 40, y: 353, size: 38, weight: 700, anchor: 'start', maxWidth: 440 }),
+      T({ name: '左駅 英語', text: '{prev.en}', x: 40, y: 384, size: 22, weight: 500, font: 'Roboto', anchor: 'start', maxWidth: 440 }),
+      T({ name: '右駅 駅名', text: '{next.ja}', x: 1160, y: 353, size: 38, weight: 700, anchor: 'end', maxWidth: 440 }),
+      T({ name: '右駅 英語', text: '{next.en}', x: 1160, y: 384, size: 22, weight: 500, font: 'Roboto', anchor: 'end', maxWidth: 440 }),
+    ],
+  }),
+  () => ({
+    name: '私鉄風（上下ライン）', w: 1200, h: 380, printW: 900, bg: '#ffffff',
+    elements: [
+      R({ name: '上ライン', x: 0, y: 0, w: 1200, h: 20, fill: '@line', locked: true }),
+      E({ name: 'ナンバリング丸', x: 130, y: 60, w: 124, h: 124, fill: '#ffffff', stroke: '@line', strokeWidth: 12, showIf: 'has:cur.no' }),
+      T({ name: '当駅 路線記号', text: '{cur.code}', x: 192, y: 100, size: 30, weight: 700, font: 'Roboto', showIf: 'has:cur.no' }),
+      T({ name: '当駅 駅番号', text: '{cur.no}', x: 192, y: 146, size: 48, weight: 700, font: 'Roboto', showIf: 'has:cur.no' }),
+      T({ name: '駅名（漢字）', text: '{cur.ja}', x: 650, y: 122, size: 116, weight: 700, font: 'Zen Kaku Gothic New', maxWidth: 620 }),
+      T({ name: 'ひらがな', text: '{cur.kana}', x: 650, y: 204, size: 34, weight: 500, letterSpacing: 10, maxWidth: 620 }),
+      T({ name: '英語', text: '{cur.en}', x: 650, y: 248, size: 36, weight: 400, font: 'Roboto', maxWidth: 620 }),
+      R({ name: '下ライン', x: 0, y: 292, w: 1200, h: 88, fill: '@line', locked: true }),
+      S({ name: '左矢印', preset: 'arrow-left', x: 28, y: 316, w: 44, h: 40, fill: '#ffffff', showIf: 'has:prev.ja' }),
+      T({ name: '左駅 駅名', text: '{prev.ja}', x: 88, y: 322, size: 32, weight: 700, color: '#ffffff', anchor: 'start', maxWidth: 420 }),
+      T({ name: '左駅 英語', text: '{prev.en}', x: 88, y: 358, size: 20, weight: 500, color: '#ffffff', font: 'Roboto', anchor: 'start', maxWidth: 420 }),
+      S({ name: '右矢印', preset: 'arrow-right', x: 1128, y: 316, w: 44, h: 40, fill: '#ffffff', showIf: 'has:next.ja' }),
+      T({ name: '右駅 駅名', text: '{next.ja}', x: 1112, y: 322, size: 32, weight: 700, color: '#ffffff', anchor: 'end', maxWidth: 420 }),
+      T({ name: '右駅 英語', text: '{next.en}', x: 1112, y: 358, size: 20, weight: 500, color: '#ffffff', font: 'Roboto', anchor: 'end', maxWidth: 420 }),
+    ],
+  }),
+  () => ({
+    name: '地下鉄風（ダーク）', w: 1200, h: 360, printW: 900, bg: '#1f2a36',
+    elements: [
+      R({ name: '左ライン', x: 0, y: 0, w: 26, h: 360, fill: '@line', locked: true }),
+      E({ name: 'ナンバリング丸', x: 100, y: 52, w: 140, h: 140, fill: '#ffffff', stroke: '@line', strokeWidth: 16, showIf: 'has:cur.no' }),
+      T({ name: '当駅 路線記号', text: '{cur.code}', x: 170, y: 98, size: 34, weight: 700, font: 'Inter', showIf: 'has:cur.no' }),
+      T({ name: '当駅 駅番号', text: '{cur.no}', x: 170, y: 148, size: 54, weight: 700, font: 'Inter', showIf: 'has:cur.no' }),
+      T({ name: '駅名（漢字）', text: '{cur.ja}', x: 680, y: 104, size: 112, weight: 700, color: '#ffffff', maxWidth: 640 }),
+      T({ name: '英語', text: '{cur.en}', x: 680, y: 194, size: 42, weight: 600, color: '#ffffff', font: 'Inter', letterSpacing: 2, maxWidth: 640 }),
+      L({ name: '区切り線', x1: 70, y1: 250, x2: 1160, y2: 250, stroke: '@line', strokeWidth: 8 }),
+      T({ name: '左駅', text: '← {prev.ja}', x: 70, y: 294, size: 34, weight: 700, color: '#ffffff', anchor: 'start', maxWidth: 480, showIf: 'has:prev.ja' }),
+      T({ name: '左駅 英語', text: '{prev.en}', x: 118, y: 330, size: 20, weight: 500, color: '#b0bec5', font: 'Inter', anchor: 'start', maxWidth: 440 }),
+      T({ name: '右駅', text: '{next.ja} →', x: 1160, y: 294, size: 34, weight: 700, color: '#ffffff', anchor: 'end', maxWidth: 480, showIf: 'has:next.ja' }),
+      T({ name: '右駅 英語', text: '{next.en}', x: 1112, y: 330, size: 20, weight: 500, color: '#b0bec5', font: 'Inter', anchor: 'end', maxWidth: 440 }),
+    ],
+  }),
+  () => ({
+    name: 'JR北海道風（新型・矢羽根帯）', w: 1800, h: 600, printW: 900, bg: '#ffffff',
+    sample: SAMPLE_HOKKAIDO_A,
+    elements: [
+      R({ name: '外枠（筐体）', x: 0, y: 0, w: 1800, h: 600, fill: 'none', stroke: '#3a3d40', strokeWidth: 24, hidden: true }),
+      T({ name: 'ひらがな（大）', text: '{cur.kana}', x: 900, y: 118, size: 150, weight: 700, font: 'Zen Kaku Gothic New', color: '#333333', maxWidth: 1050 }),
+      T({ name: '駅名（漢字）', text: '{cur.ja}', x: 900, y: 268, size: 92, weight: 500, font: 'Zen Kaku Gothic New', color: '#333333', letterSpacing: 92, maxWidth: 700 }),
+      E({ name: 'ナンバリング丸', x: 1362, y: 78, w: 180, h: 180, fill: '#ffffff', stroke: '@line3', strokeWidth: 12, showIf: 'has:cur.no' }),
+      T({ name: '当駅 路線記号', text: '{cur.code}', x: 1452, y: 130, size: 74, weight: 700, font: 'Roboto Condensed', color: '#333333', maxWidth: 120, showIf: 'has:cur.no' }),
+      T({ name: '当駅 駅番号', text: '{cur.no}', x: 1452, y: 205, size: 76, weight: 700, font: 'Roboto Condensed', color: '#333333', maxWidth: 120, showIf: 'has:cur.no' }),
+      R({ name: '帯', x: 90, y: 335, w: 1620, h: 100, fill: '@line', locked: true }),
+      S({ name: '帯 左先端', preset: 'tri-left', x: 20, y: 335, w: 71, h: 100, fill: '@line', showIf: 'has:prev.ja' }),
+      S({ name: '帯 右先端', preset: 'tri-right', x: 1709, y: 335, w: 71, h: 100, fill: '@line', showIf: 'has:next.ja' }),
+      E({ name: '左 白丸', x: 146, y: 343, w: 84, h: 84, fill: '#ffffff', showIf: 'has:prev.ja' }),
+      E({ name: '右 白丸', x: 1570, y: 343, w: 84, h: 84, fill: '#ffffff', showIf: 'has:next.ja' }),
+      T({ name: '英語（帯内）', text: '{cur.en}', x: 900, y: 386, size: 84, weight: 400, font: 'Roboto', color: '#ffffff', maxWidth: 1150 }),
+      T({ name: '左駅 ひらがな', text: '{prev.kana}', x: 205, y: 484, size: 54, weight: 500, font: 'Zen Kaku Gothic New', color: '#333333', maxWidth: 420 }),
+      T({ name: '左駅 英語', text: '{prev.en}', x: 205, y: 542, size: 46, weight: 400, font: 'Roboto', color: '#333333', maxWidth: 420 }),
+      T({ name: '右駅 ひらがな', text: '{next.kana}', x: 1615, y: 484, size: 54, weight: 500, font: 'Zen Kaku Gothic New', color: '#333333', maxWidth: 420 }),
+      T({ name: '右駅 英語', text: '{next.en}', x: 1615, y: 542, size: 46, weight: 400, font: 'Roboto', color: '#333333', maxWidth: 420 }),
+    ],
+  }),
+  () => ({
+    name: 'JR北海道風（三角POP用・2:1）', w: 2000, h: 1000, printW: 202, bg: '#ffffff',
+    sample: SAMPLE_HOKKAIDO_POP,
+    elements: [
+      T({ name: 'ひらがな（大）', text: '{cur.kana}', x: 1000, y: 350, size: 320, weight: 900, font: 'Zen Kaku Gothic New', maxWidth: 1760 }),
+      T({ name: '駅名（漢字）', text: '{cur.ja}', x: 1000, y: 600, size: 110, weight: 700, font: 'Zen Kaku Gothic New', letterSpacing: 110, maxWidth: 1000 }),
+      R({ name: '帯', x: 160, y: 715, w: 1680, h: 160, fill: '@line', locked: true }),
+      S({ name: '帯 左先端', preset: 'tri-left', x: 50, y: 715, w: 111, h: 160, fill: '@line', showIf: 'has:prev.ja' }),
+      S({ name: '帯 右先端', preset: 'tri-right', x: 1839, y: 715, w: 111, h: 160, fill: '@line', showIf: 'has:next.ja' }),
+      E({ name: '左 白丸', x: 195, y: 730, w: 130, h: 130, fill: '#ffffff', showIf: 'has:prev.ja' }),
+      E({ name: '右 白丸', x: 1675, y: 730, w: 130, h: 130, fill: '#ffffff', showIf: 'has:next.ja' }),
+      T({ name: '英語（帯内）', text: '{cur.en}', x: 1000, y: 796, size: 120, weight: 400, font: 'Roboto', color: '#ffffff', maxWidth: 1250 }),
+      T({ name: '左駅 ひらがな（非表示）', text: '{prev.kana}', x: 260, y: 940, size: 70, weight: 500, font: 'Zen Kaku Gothic New', maxWidth: 480, hidden: true }),
+      T({ name: '右駅 ひらがな（非表示）', text: '{next.kana}', x: 1740, y: 940, size: 70, weight: 500, font: 'Zen Kaku Gothic New', maxWidth: 480, hidden: true }),
+    ],
+  }),
+  () => ({
+    name: 'JR北海道風（旧型・下部ライン）', w: 1200, h: 400, printW: 900, bg: '#ffffff',
+    sample: SAMPLE_HOKKAIDO_S,
+    elements: [
+      T({ name: 'ひらがな（大）', text: '{cur.kana}', x: 580, y: 64, size: 92, weight: 800, font: 'M PLUS 1p', letterSpacing: 70, maxWidth: 760 }),
+      T({ name: '駅名（漢字）', text: '{cur.ja}', x: 580, y: 144, size: 36, weight: 700, font: 'M PLUS 1p', letterSpacing: 52, maxWidth: 420 }),
+      T({ name: '英語', text: '{cur.en}', x: 580, y: 198, size: 46, weight: 700, font: 'Roboto', maxWidth: 620 }),
+      R({ name: '特定都区市内 枠', x: 1090, y: 30, w: 62, h: 62, fill: '#ffffff', stroke: '#1a1a1a', strokeWidth: 3, showIf: 'has:cur.area' }),
+      T({ name: '特定都区市内', text: '{cur.area}', x: 1121, y: 61, size: 46, weight: 700, showIf: 'has:cur.area' }),
+      E({ name: 'ナンバリング丸', x: 930, y: 110, w: 156, h: 156, fill: '#ffffff', stroke: '@line3', strokeWidth: 9, showIf: 'has:cur.no' }),
+      T({ name: '当駅 路線記号', text: '{cur.code}', x: 1008, y: 150, size: 54, weight: 500, font: 'Roboto', maxWidth: 100, showIf: 'has:cur.no' }),
+      T({ name: '当駅 駅番号', text: '{cur.no}', x: 1008, y: 210, size: 56, weight: 500, font: 'Roboto', maxWidth: 110, showIf: 'has:cur.no' }),
+      R({ name: '下部ライン', x: 0, y: 248, w: 1200, h: 152, fill: '@line', locked: true }),
+      S({ name: '左矢印', preset: 'arrowt-left', x: 22, y: 286, w: 96, h: 70, fill: '#1a1a1a', showIf: 'has:prev.ja' }),
+      T({ name: '左駅 ひらがな', text: '{prev.kana}', x: 136, y: 298, size: 50, weight: 700, font: 'M PLUS 1p', letterSpacing: 24, anchor: 'start', maxWidth: 400 }),
+      T({ name: '左駅 英語', text: '{prev.en}', x: 136, y: 348, size: 30, weight: 700, font: 'Roboto', anchor: 'start', maxWidth: 400 }),
+      S({ name: '右矢印', preset: 'arrowt-right', x: 1082, y: 286, w: 96, h: 70, fill: '#1a1a1a', showIf: 'has:next.ja' }),
+      T({ name: '右駅 ひらがな', text: '{next.kana}', x: 1064, y: 298, size: 50, weight: 700, font: 'M PLUS 1p', letterSpacing: 24, anchor: 'end', maxWidth: 400 }),
+      T({ name: '右駅 英語', text: '{next.en}', x: 1064, y: 348, size: 30, weight: 700, font: 'Roboto', anchor: 'end', maxWidth: 400 }),
+    ],
+  }),
+];
+
+/* ================================================================
+   状態・保存
+   ================================================================ */
+const KEY_WORK = 'ekimei.v1.work', KEY_TPLS = 'ekimei.v1.templates';
+const st = {
+  tpl: null, data: clone(DEFAULT_DATA), batch: DEFAULT_BATCH, sel: null, zoom: 1,
+  grid: false, snap: true, gridSize: 10,
+  print: { target: 'current', paper: 'A4', orient: 'landscape', mode: 'fit', margin: 10, crop: true, tentBack: 'swap', tentPad: 4, tentFill: true, tentGlue: 38.5,
+    cardW: 91, cardH: 55, cardCols: 2, cardRows: 5, cardLeft: 14, cardTop: 11, cardGapX: 0, cardGapY: 0, cardPad: 2, cardStart: 1, cardRepeat: 'list', cardFill: true, cardGuide: false, cardCutStyle: 'dash' },
+  batchDir: 'fwd', batchLoop: false, batchOv: {}, indiv: null,
+};
+function loadJSON(k, def) { try { const v = JSON.parse(localStorage.getItem(k)); return v ?? def; } catch { return def; } }
+function saveJSON(k, v, silent) {
+  try { localStorage.setItem(k, JSON.stringify(v)); return true; }
+  catch (e) { if (!silent) alert('保存に失敗しました（ブラウザの保存領域が使えないか、容量オーバーです。JSON書き出しをご利用ください）'); return false; }
+}
+let saveTimer = 0;
+function saveWork() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    syncIndiv();
+    const ok = saveJSON(KEY_WORK, { tpl: st.indiv ? st.indiv.baseTpl : st.tpl, data: st.indiv ? st.indiv.baseData : st.data, batchOv: st.batchOv, batch: st.batch, print: st.print, grid: st.grid, snap: st.snap, batchDir: st.batchDir, batchLoop: st.batchLoop }, true);
+    $('#stSave').textContent = ok ? '自動保存済み' : '⚠ 自動保存できません（JSON書き出しで保存してください）';
+  }, 400);
+}
+const getTemplates = () => loadJSON(KEY_TPLS, {});
+const setTemplates = t => saveJSON(KEY_TPLS, t);
+function normalizeTpl(t) {
+  const out = { name: t.name || '無題', w: +t.w || 1200, h: +t.h || 400, printW: +t.printW || 900, bg: t.bg || '#ffffff', gridSize: +t.gridSize || 10, elements: [] };
+  for (const e of t.elements || []) {
+    if (!DEFAULTS[e.type]) continue;
+    out.elements.push({ ...COMMON, ...clone(DEFAULTS[e.type]), x: 0, y: 0, ...e, id: e.id || uid() });
+  }
+  return out;
+}
+
+/* ---- 履歴（元に戻す） ---- */
+let hist = [], hi = -1;
+function commit() {
+  const s = JSON.stringify(st.tpl);
+  if (hist[hi] === s) return;
+  hist = hist.slice(0, hi + 1); hist.push(s);
+  if (hist.length > 150) hist.shift();
+  hi = hist.length - 1;
+  updateUndo(); saveWork();
+}
+function undo() { if (hi > 0) { hi--; restore(); } }
+function redo() { if (hi < hist.length - 1) { hi++; restore(); } }
+function restore() {
+  st.tpl = JSON.parse(hist[hi]);
+  if (st.sel && !findEl(st.sel)) st.sel = null;
+  fullRefresh(); updateUndo(); saveWork();
+}
+function updateUndo() { $('#undoBtn').disabled = hi <= 0; $('#redoBtn').disabled = hi >= hist.length - 1; }
+function resetHistory() { hist = []; hi = -1; commit(); }
+
+/* ================================================================
+   描画
+   ================================================================ */
+function col(v, d) {
+  if (v === '@line') return d.line?.color || '#888888';
+  if (v === '@line2') return d.line?.color2 || '#1a1a1a';
+  if (v === '@line3') return d.line?.color3 || d.line?.color || '#888888';
+  if (!v) return 'none';
+  return v;
+}
+function resolveText(s, d) {
+  return String(s ?? '').replace(/\{(\w+)\.(\w+)\}/g, (m, a, b) => (d[a] && d[a][b] != null) ? d[a][b] : '');
+}
+function checkShow(cond, d) {
+  if (!cond) return true;
+  const [mode, ref] = cond.split(':');
+  const [a, b] = (ref || '').split('.');
+  const v = String((d[a] || {})[b] || '').trim();
+  return mode === 'has' ? !!v : !v;
+}
+function paint(el, d) {
+  const sw = +el.strokeWidth || 0, s = col(el.stroke, d);
+  return { fill: col(el.fill, d), stroke: (s !== 'none' && sw > 0) ? s : 'none', 'stroke-width': sw > 0 ? sw : null };
+}
+
+function renderEl(el, d, editor) {
+  const g = mk('g');
+  let cx = 0, cy = 0;
+  switch (el.type) {
+    case 'text': {
+      const t = mk('text', {
+        x: el.x, y: el.y, 'font-family': fontStack(el.font), 'font-size': el.size, 'font-weight': el.weight,
+        'font-style': el.italic ? 'italic' : null, fill: col(el.color, d), 'text-anchor': el.anchor || 'middle',
+        'dominant-baseline': 'central', 'letter-spacing': +el.letterSpacing ? el.letterSpacing : null,
+      });
+      if (+el.strokeWidth > 0 && col(el.strokeColor, d) !== 'none') {
+        t.setAttribute('stroke', col(el.strokeColor, d)); t.setAttribute('stroke-width', el.strokeWidth);
+        t.setAttribute('paint-order', 'stroke'); t.setAttribute('stroke-linejoin', 'round');
+      }
+      let str = resolveText(el.text, d);
+      let ghost = false;
+      if (editor && !str.trim()) { str = el.text || '(空)'; ghost = true; }
+      const lines = str.split('\n');
+      const lh = el.size * (+el.lineHeight || 1.2);
+      const y0 = el.y - (lines.length - 1) * lh / 2;
+      const ls = +el.letterSpacing || 0;
+      // 字間は最後の文字の後ろにも付くため、揃え位置を補正する
+      const lsShift = el.anchor === 'end' ? ls : el.anchor === 'start' ? 0 : ls / 2;
+      lines.forEach((ln, i) => {
+        const ts = mk('tspan', { x: r2(el.x + lsShift), y: r2(y0 + i * lh) });
+        ts.textContent = ln;
+        const M = +el.maxWidth;
+        if (M > 0 && el.fit && el.fit !== 'none' && ln) {
+          const len = measure(t, ln);
+          const n = [...ln].length;
+          if (el.fit === 'shrink' && len > M) {
+            // 字間を広げている場合は、まず字間を詰め、それでも入らなければ文字を縮める
+            // （Chromeは末尾の字間もtextLengthに含めるので、その分を足す）
+            const glyphs = len - ls * n;
+            if (ls > 0 && glyphs <= M) {
+              ts.setAttribute('textLength', r2(M + ls)); ts.setAttribute('lengthAdjust', 'spacing');
+            } else {
+              if (ls) { ts.setAttribute('letter-spacing', 0); ts.setAttribute('x', el.x); }
+              ts.setAttribute('textLength', M); ts.setAttribute('lengthAdjust', 'spacingAndGlyphs');
+            }
+          }
+          else if (el.fit === 'justify' && [...ln].length > 1) { ts.setAttribute('textLength', M); ts.setAttribute('lengthAdjust', len > M ? 'spacingAndGlyphs' : 'spacing'); }
+          else if (el.fit === 'stretch' && len > 0) { ts.setAttribute('textLength', M); ts.setAttribute('lengthAdjust', 'spacingAndGlyphs'); }
+        }
+        t.append(ts);
+      });
+      if (ghost) t.setAttribute('opacity', .3);
+      g.append(t); cx = el.x; cy = el.y;
+      break;
+    }
+    case 'rect':
+      g.append(mk('rect', { x: el.x, y: el.y, width: Math.max(0, el.w), height: Math.max(0, el.h), rx: +el.rx || null, ...paint(el, d) }));
+      cx = el.x + el.w / 2; cy = el.y + el.h / 2; break;
+    case 'ellipse':
+      g.append(mk('ellipse', { cx: el.x + el.w / 2, cy: el.y + el.h / 2, rx: Math.max(0, el.w / 2), ry: Math.max(0, el.h / 2), ...paint(el, d) }));
+      cx = el.x + el.w / 2; cy = el.y + el.h / 2; break;
+    case 'shape': {
+      const pts = shapePoints(el).map(([px, py]) => `${r2(el.x + px * el.w)},${r2(el.y + py * el.h)}`).join(' ');
+      g.append(mk('polygon', { points: pts, 'stroke-linejoin': 'round', ...paint(el, d) }));
+      cx = el.x + el.w / 2; cy = el.y + el.h / 2; break;
+    }
+    case 'line': {
+      const a = { x1: el.x1, y1: el.y1, x2: el.x2, y2: el.y2 };
+      if (editor) g.append(mk('line', { ...a, stroke: 'transparent', 'stroke-width': Math.max(+el.strokeWidth, 16) }));
+      g.append(mk('line', { ...a, stroke: col(el.stroke, d), 'stroke-width': el.strokeWidth, 'stroke-linecap': el.cap, 'stroke-dasharray': el.dash || null }));
+      cx = (el.x1 + el.x2) / 2; cy = (el.y1 + el.y2) / 2; break;
+    }
+    case 'image':
+      if (el.href) g.append(mk('image', { href: el.href, x: el.x, y: el.y, width: Math.max(0, el.w), height: Math.max(0, el.h), preserveAspectRatio: el.preserve }));
+      else if (editor) g.append(mk('rect', { x: el.x, y: el.y, width: el.w, height: el.h, fill: '#eee', stroke: '#999', 'stroke-dasharray': '6 4' }));
+      cx = el.x + el.w / 2; cy = el.y + el.h / 2; break;
+  }
+  if (+el.rotation) g.setAttribute('transform', `rotate(${el.rotation} ${r2(cx)} ${r2(cy)})`);
+  if (el.opacity != null && +el.opacity < 1) g.setAttribute('opacity', el.opacity);
+  return g;
+}
+
+function buildSign(tpl, d, parent, editor = false) {
+  parent.replaceChildren(mk('rect', { x: 0, y: 0, width: tpl.w, height: tpl.h, fill: col(tpl.bg, d) }));
+  for (const el of tpl.elements) {
+    if (el.hidden) continue;
+    const show = checkShow(el.showIf, d);
+    if (!show && !editor) continue;
+    const n = renderEl(el, d, editor);
+    if (editor) {
+      n.dataset.id = el.id;
+      n.setAttribute('pointer-events', el.locked ? 'none' : 'bounding-box');
+      if (!show) {
+        const w = mk('g', { opacity: .18 }); w.dataset.id = el.id; w.append(n); n.removeAttribute('data-id');
+        parent.append(w); continue;
+      }
+    }
+    parent.append(n);
+  }
+}
+
+/* ---- ステージ ---- */
+const stage = $('#stage');
+const defs = mk('defs'), signG = mk('g'), gridG = mk('g', { 'pointer-events': 'none' }), ovG = mk('g');
+stage.append(defs, signG, gridG, ovG);
+const findEl = id => st.tpl.elements.find(e => e.id === id);
+const selEl = () => st.sel ? findEl(st.sel) : null;
+
+let rafPending = false;
+function render() {
+  if (rafPending) return;
+  rafPending = true;
+  requestAnimationFrame(() => { rafPending = false; renderNow(); });
+}
+function renderNow() {
+  const t = st.tpl;
+  stage.setAttribute('viewBox', `0 0 ${t.w} ${t.h}`);
+  stage.setAttribute('width', Math.round(t.w * st.zoom));
+  stage.setAttribute('height', Math.round(t.h * st.zoom));
+  buildSign(t, st.data, signG, true);
+  drawGrid(); drawOverlay();
+  $('#stSize').textContent = `キャンバス ${t.w}×${t.h}（印刷 ${t.printW}×${r2(t.printW * t.h / t.w)} mm）`;
+  $('#stZoom').textContent = `表示 ${Math.round(st.zoom * 100)}%`;
+}
+function drawGrid() {
+  gridG.replaceChildren();
+  $('#gridBtn').classList.toggle('on', st.grid);
+  $('#snapBtn').classList.toggle('on', st.snap);
+  if (!st.grid) return;
+  const gs = st.tpl.gridSize || 10, t = st.tpl;
+  defs.replaceChildren();
+  const pat = mk('pattern', { id: 'gridPat', width: gs, height: gs, patternUnits: 'userSpaceOnUse' });
+  pat.append(mk('path', { d: `M ${gs} 0 L 0 0 0 ${gs}`, fill: 'none', stroke: 'rgba(37,99,235,.25)', 'stroke-width': 1, 'vector-effect': 'non-scaling-stroke' }));
+  defs.append(pat);
+  gridG.append(mk('rect', { x: 0, y: 0, width: t.w, height: t.h, fill: 'url(#gridPat)' }));
+  const cl = { stroke: 'rgba(220,38,38,.45)', 'stroke-width': 1, 'vector-effect': 'non-scaling-stroke', 'stroke-dasharray': '4 4' };
+  gridG.append(mk('line', { x1: t.w / 2, y1: 0, x2: t.w / 2, y2: t.h, ...cl }), mk('line', { x1: 0, y1: t.h / 2, x2: t.w, y2: t.h / 2, ...cl }));
+}
+let guides = [];
+function drawOverlay() {
+  ovG.replaceChildren();
+  const ns = { 'vector-effect': 'non-scaling-stroke', fill: 'none' };
+  for (const g of guides) ovG.append(mk('line', { ...g, stroke: '#e11d48', 'stroke-width': 1, ...ns }));
+  const el = selEl();
+  if (!el) return;
+  const node = signG.querySelector(`[data-id="${el.id}"]`);
+  if (!node) return;
+  const bb = node.getBBox();
+  const tr = node.getAttribute('transform') || node.firstChild?.getAttribute?.('transform') || null;
+  const g = mk('g', { transform: tr });
+  const hs = 9 / st.zoom;
+  g.append(mk('rect', { x: bb.x, y: bb.y, width: bb.width, height: bb.height, stroke: '#2563eb', 'stroke-width': 1.5, 'stroke-dasharray': '5 3', ...ns, 'pointer-events': 'none' }));
+  if (el.type === 'text' && +el.maxWidth > 0) {
+    const M = +el.maxWidth, x0 = el.anchor === 'start' ? el.x : el.anchor === 'end' ? el.x - M : el.x - M / 2;
+    g.append(mk('rect', { x: x0, y: bb.y, width: M, height: bb.height, stroke: '#16a34a', 'stroke-width': 1, 'stroke-dasharray': '2 3', ...ns, 'pointer-events': 'none' }));
+  }
+  const handle = (x, y, name) => {
+    const r = mk('rect', { x: x - hs / 2, y: y - hs / 2, width: hs, height: hs, fill: '#fff', stroke: '#2563eb', 'stroke-width': 1.5, 'vector-effect': 'non-scaling-stroke', style: `cursor:${name === 'se' ? 'nwse-resize' : 'move'}` });
+    r.dataset.handle = name; g.append(r);
+  };
+  if (!el.locked) {
+    if (el.type === 'line') { handle(el.x1, el.y1, 'p1'); handle(el.x2, el.y2, 'p2'); }
+    else if (el.type === 'text') handle(bb.x + bb.width, bb.y + bb.height, 'se');
+    else handle(el.x + el.w, el.y + el.h, 'se');
+  }
+  ovG.append(g);
+}
+
+/* ---- ズーム ---- */
+function zoomFit() {
+  const w = $('#canvasWrap');
+  const z = Math.min((w.clientWidth - 60) / st.tpl.w, (w.clientHeight - 60) / st.tpl.h);
+  st.zoom = Math.max(.05, Math.min(4, z || 1));
+  render();
+}
+function zoomBy(f) { st.zoom = Math.max(.05, Math.min(6, st.zoom * f)); render(); }
+
+/* ================================================================
+   キャンバス操作（選択・ドラッグ）
+   ================================================================ */
+function toSvg(e) {
+  const p = stage.createSVGPoint(); p.x = e.clientX; p.y = e.clientY;
+  return p.matrixTransform(stage.getScreenCTM().inverse());
+}
+const snapV = v => st.snap ? Math.round(v / (st.tpl.gridSize || 10)) * (st.tpl.gridSize || 10) : Math.round(v);
+let drag = null;
+stage.addEventListener('pointerdown', e => {
+  if (e.button !== 0) return;
+  const p = toSvg(e);
+  const hd = e.target.closest('[data-handle]');
+  const el = selEl();
+  if (hd && el) {
+    const node = signG.querySelector(`[data-id="${el.id}"]`);
+    drag = { kind: hd.dataset.handle, start: p, orig: clone(el), bb: node ? node.getBBox() : null, moved: false };
+  } else {
+    const n = e.target.closest('[data-id]');
+    if (!n) { select(null); return; }
+    select(n.dataset.id);
+    const sel = findEl(n.dataset.id);
+    if (sel.locked) return;
+    const bb = n.getBBox();
+    drag = { kind: 'move', start: p, orig: clone(sel), bb, moved: false };
+  }
+  stage.setPointerCapture(e.pointerId);
+  e.preventDefault();
+});
+stage.addEventListener('pointermove', e => {
+  const p = toSvg(e);
+  $('#stPos').textContent = `X ${Math.round(p.x)}  Y ${Math.round(p.y)}`;
+  if (!drag) return;
+  const el = selEl(); if (!el) return;
+  let dx = p.x - drag.start.x, dy = p.y - drag.start.y;
+  if (!drag.moved && Math.hypot(dx, dy) * st.zoom < 3) return;
+  drag.moved = true;
+  const o = drag.orig;
+  guides = [];
+  if (drag.kind === 'move') {
+    if (e.shiftKey) { Math.abs(dx) > Math.abs(dy) ? dy = 0 : dx = 0; }
+    const refX = o.type === 'line' ? o.x1 : o.x, refY = o.type === 'line' ? o.y1 : o.y;
+    let nx = snapV(refX + dx), ny = snapV(refY + dy);
+    // キャンバス中央への吸着
+    const th = 8 / st.zoom, W = st.tpl.w, H = st.tpl.h;
+    const offX = drag.bb.x + drag.bb.width / 2 - refX, offY = drag.bb.y + drag.bb.height / 2 - refY;
+    if (Math.abs(nx + offX - W / 2) < th) { nx = r2(W / 2 - offX); guides.push({ x1: W / 2, y1: 0, x2: W / 2, y2: H }); }
+    if (Math.abs(ny + offY - H / 2) < th) { ny = r2(H / 2 - offY); guides.push({ x1: 0, y1: H / 2, x2: W, y2: H / 2 }); }
+    const mx = nx - refX, my = ny - refY;
+    if (o.type === 'line') { el.x1 = o.x1 + mx; el.y1 = o.y1 + my; el.x2 = o.x2 + mx; el.y2 = o.y2 + my; }
+    else { el.x = nx; el.y = ny; }
+  } else if (drag.kind === 'se') {
+    if (o.type === 'text') {
+      const s = Math.max(.05, (drag.bb.height + dy) / drag.bb.height);
+      el.size = Math.max(4, Math.round(o.size * s));
+      if (+o.maxWidth > 0) el.maxWidth = Math.round(o.maxWidth * s);
+    } else {
+      let w = snapV(o.x + o.w + dx) - o.x, hh = snapV(o.y + o.h + dy) - o.y;
+      if (e.shiftKey && o.w && o.h) { const s = Math.max(w / o.w, hh / o.h); w = Math.round(o.w * s); hh = Math.round(o.h * s); }
+      el.w = Math.max(1, w); el.h = Math.max(1, hh);
+    }
+  } else if (drag.kind === 'p1') { el.x1 = snapV(o.x1 + dx); el.y1 = snapV(o.y1 + dy); if (e.shiftKey) axisLock(el, 'p1'); }
+  else if (drag.kind === 'p2') { el.x2 = snapV(o.x2 + dx); el.y2 = snapV(o.y2 + dy); if (e.shiftKey) axisLock(el, 'p2'); }
+  render(); refreshPropValues();
+});
+function axisLock(el, which) {
+  const horiz = Math.abs(el.x2 - el.x1) > Math.abs(el.y2 - el.y1);
+  if (which === 'p1') horiz ? el.y1 = el.y2 : el.x1 = el.x2; else horiz ? el.y2 = el.y1 : el.x2 = el.x1;
+}
+stage.addEventListener('pointerup', () => {
+  if (drag?.moved) commit();
+  drag = null; guides = []; render();
+});
+$('#canvasWrap').addEventListener('pointerdown', e => { if (e.target === e.currentTarget || e.target.classList.contains('canvasInner')) select(null); });
+$('#canvasWrap').addEventListener('wheel', e => {
+  if (!e.ctrlKey) return;
+  e.preventDefault(); zoomBy(e.deltaY < 0 ? 1.1 : 1 / 1.1);
+}, { passive: false });
+
+function select(id) {
+  st.sel = id;
+  renderLayers(); renderProps(); render();
+}
+
+/* ---- 要素操作 ---- */
+function addElement(type, extra = {}) {
+  const t = st.tpl, cx = Math.round(t.w / 2), cy = Math.round(t.h / 2);
+  let el;
+  if (type === 'line') el = newEl('line', { x1: cx - 150, y1: cy, x2: cx + 150, y2: cy, ...extra });
+  else if (type === 'text') el = newEl('text', { x: cx, y: cy, text: '{cur.ja}', name: 'テキスト', ...extra });
+  else { const d = DEFAULTS[type]; el = newEl(type, { x: Math.round(cx - (extra.w || d.w) / 2), y: Math.round(cy - (extra.h || d.h) / 2), ...extra }); }
+  t.elements.push(el);
+  commit(); select(el.id);
+}
+function moveBy(el, dx, dy) {
+  if (el.type === 'line') { el.x1 += dx; el.x2 += dx; el.y1 += dy; el.y2 += dy; }
+  else { el.x += dx; el.y += dy; }
+}
+function deleteSel() {
+  const el = selEl(); if (!el) return;
+  st.tpl.elements = st.tpl.elements.filter(e => e !== el);
+  st.sel = null; commit(); fullRefresh();
+}
+function duplicateSel(src = selEl()) {
+  if (!src) return;
+  const c = { ...clone(src), id: uid(), name: (src.name || '') + ' コピー', locked: false };
+  moveBy(c, 10, 10);
+  const i = st.tpl.elements.findIndex(e => e.id === src.id);
+  st.tpl.elements.splice(i < 0 ? st.tpl.elements.length : i + 1, 0, c);
+  commit(); select(c.id);
+}
+function reorder(dir) {
+  const a = st.tpl.elements, i = a.findIndex(e => e.id === st.sel), j = i + dir;
+  if (i < 0 || j < 0 || j >= a.length) return;
+  [a[i], a[j]] = [a[j], a[i]];
+  commit(); renderLayers(); render();
+}
+function alignSel(mode) {
+  const el = selEl(); if (!el) return;
+  const node = signG.querySelector(`[data-id="${el.id}"]`); if (!node) return;
+  const bb = node.getBBox(), t = st.tpl;
+  if (mode === 'h') moveBy(el, r2(t.w / 2 - (bb.x + bb.width / 2)), 0);
+  if (mode === 'v') moveBy(el, 0, r2(t.h / 2 - (bb.y + bb.height / 2)));
+  if (mode === 'l') moveBy(el, -bb.x, 0);
+  if (mode === 'r') moveBy(el, t.w - (bb.x + bb.width), 0);
+  if (mode === 't') moveBy(el, 0, -bb.y);
+  if (mode === 'b') moveBy(el, 0, t.h - (bb.y + bb.height));
+  commit(); render(); refreshPropValues();
+}
+
+/* ================================================================
+   レイヤーパネル
+   ================================================================ */
+const TYPE_ICON = { text: 'T', rect: '▭', ellipse: '◯', line: '╱', shape: '◆', image: '🖼' };
+function renderLayers() {
+  const box = $('#layerList'); box.replaceChildren();
+  const els = [...st.tpl.elements].reverse();
+  if (!els.length) box.append(h('div', { class: 'hint', style: 'padding:8px 10px' }, '要素がありません。上のツールバーから追加してください。'));
+  for (const el of els) {
+    const row = h('div', { class: 'layer' + (el.id === st.sel ? ' sel' : '') + (el.hidden ? ' hid' : ''), onclick: () => select(el.id) },
+      h('span', { class: 'ty' }, TYPE_ICON[el.type] || ''),
+      h('span', { class: 'nm', title: el.name }, el.name || TYPE_LABEL[el.type]),
+      h('button', { class: 'tg' + (el.hidden ? '' : ' on'), title: '表示/非表示', onclick: e => { e.stopPropagation(); el.hidden = !el.hidden; commit(); renderLayers(); render(); } }, '👁'),
+      h('button', { class: 'tg' + (el.locked ? ' on' : ''), title: 'ロック（キャンバス上で選択不可）', onclick: e => { e.stopPropagation(); el.locked = !el.locked; commit(); renderLayers(); render(); } }, '🔒'),
+    );
+    box.append(row);
+  }
+  const has = !!selEl();
+  for (const b of ['#lyUp', '#lyDown', '#lyDup', '#lyDel']) $(b).disabled = !has;
+}
+
+/* ================================================================
+   プロパティパネル
+   ================================================================ */
+const WEIGHTS = [[100, '100 極細'], [200, '200'], [300, '300 細'], [400, '400 標準'], [500, '500 中'], [600, '600'], [700, '700 太'], [800, '800'], [900, '900 極太']];
+const P = {
+  name: { l: '名前', t: 'text', full: 1 },
+  text: { l: 'テキスト（改行可・変数可）', t: 'textarea' },
+  font: { l: 'フォント', t: 'font', full: 1 },
+  size: { l: '文字サイズ', t: 'num', min: 1 },
+  weight: { l: '太さ', t: 'sel', o: WEIGHTS },
+  italic: { l: '斜体', t: 'chk' },
+  color: { l: '文字色', t: 'color', full: 1 },
+  anchor: { l: '揃え（基準点）', t: 'sel', o: [['start', '左揃え'], ['middle', '中央'], ['end', '右揃え']] },
+  letterSpacing: { l: '字間', t: 'num' },
+  lineHeight: { l: '行間（倍）', t: 'num', step: .1 },
+  maxWidth: { l: '最大幅（0=無制限）', t: 'num', min: 0 },
+  fit: { l: '幅の処理', t: 'sel', o: [['none', 'そのまま'], ['shrink', 'はみ出たら縮める'], ['justify', '均等割り付け'], ['stretch', '常に幅ぴったり']] },
+  strokeColor: { l: '縁取り色', t: 'color', full: 1 },
+  x: { l: 'X', t: 'num' }, y: { l: 'Y', t: 'num' }, w: { l: '幅', t: 'num', min: 1 }, h: { l: '高さ', t: 'num', min: 1 },
+  x1: { l: '始点 X', t: 'num' }, y1: { l: '始点 Y', t: 'num' }, x2: { l: '終点 X', t: 'num' }, y2: { l: '終点 Y', t: 'num' },
+  fill: { l: '塗り', t: 'color', full: 1 },
+  stroke: { l: '線の色', t: 'color', full: 1 },
+  strokeWidth: { l: '線の太さ', t: 'num', min: 0 },
+  rx: { l: '角丸', t: 'num', min: 0 },
+  preset: { l: '形状', t: 'sel', o: Object.entries(SHAPES).map(([k, v]) => [k, v[0]]), full: 1 },
+  points: { l: '頂点（0〜100, "x,y x,y …"）', t: 'text', full: 1 },
+  cap: { l: '線端', t: 'sel', o: [['butt', 'なし'], ['round', '丸'], ['square', '四角']] },
+  dash: { l: '破線（例: 12 6）', t: 'text' },
+  preserve: { l: '画像の収め方', t: 'sel', o: [['xMidYMid meet', '全体を収める'], ['xMidYMid slice', '切り抜いて埋める'], ['none', '引き伸ばす']], full: 1 },
+  rotation: { l: '回転（°）', t: 'num' },
+  opacity: { l: '不透明度', t: 'num', step: .05, min: 0, max: 1 },
+  showIf: { l: '表示条件', t: 'cond', full: 1 },
+};
+const LAYOUT = {
+  text: [['基本', ['name', 'text']], ['書式', ['font', 'size', 'weight', 'color', 'anchor', 'italic', 'letterSpacing', 'lineHeight']], ['位置', ['x', 'y', 'rotation', 'opacity']], ['幅の自動調整', ['maxWidth', 'fit']], ['縁取り', ['strokeColor', 'strokeWidth']], ['条件', ['showIf']]],
+  rect: [['基本', ['name']], ['位置・サイズ', ['x', 'y', 'w', 'h', 'rotation', 'opacity']], ['スタイル', ['fill', 'stroke', 'strokeWidth', 'rx']], ['条件', ['showIf']]],
+  ellipse: [['基本', ['name']], ['位置・サイズ', ['x', 'y', 'w', 'h', 'rotation', 'opacity']], ['スタイル', ['fill', 'stroke', 'strokeWidth']], ['条件', ['showIf']]],
+  shape: [['基本', ['name', 'preset', 'points']], ['位置・サイズ', ['x', 'y', 'w', 'h', 'rotation', 'opacity']], ['スタイル', ['fill', 'stroke', 'strokeWidth']], ['条件', ['showIf']]],
+  line: [['基本', ['name']], ['位置', ['x1', 'y1', 'x2', 'y2', 'opacity']], ['スタイル', ['stroke', 'strokeWidth', 'cap', 'dash']], ['条件', ['showIf']]],
+  image: [['基本', ['name', 'preserve']], ['位置・サイズ', ['x', 'y', 'w', 'h', 'rotation', 'opacity']], ['条件', ['showIf']]],
+};
+function varOptions() {
+  const opts = [h('option', { value: '' }, '変数を挿入…')];
+  const og0 = h('optgroup', { label: '路線' });
+  for (const [k, l] of LINE_FIELDS) og0.append(h('option', { value: `{line.${k}}` }, `${l}  {line.${k}}`));
+  opts.push(og0);
+  for (const [r, rl] of ROLES) {
+    const og = h('optgroup', { label: rl });
+    for (const [k, l] of FIELDS) og.append(h('option', { value: `{${r}.${k}}` }, `${rl}：${l}  {${r}.${k}}`));
+    opts.push(og);
+  }
+  return opts;
+}
+function fieldRefOptions() {
+  const out = [];
+  for (const [k, l] of LINE_FIELDS) out.push([`line.${k}`, `路線：${l}`]);
+  for (const [r, rl] of ROLES) for (const [k, l] of FIELDS) out.push([`${r}.${k}`, `${rl}：${l}`]);
+  return out;
+}
+function selectEl(opts, val) {
+  const s = h('select');
+  for (const [v, l] of opts) s.append(h('option', { value: v }, l));
+  s.value = val;
+  return s;
+}
+
+/* 汎用フィールド生成。get()/set(v, commit) */
+function makeField(def, get, set, key) {
+  let input;
+  switch (def.t) {
+    case 'text':
+      input = h('input', { value: get() ?? '', oninput: e => set(e.target.value, false), onchange: e => set(e.target.value, true) }); break;
+    case 'textarea': {
+      const ta = h('textarea', { rows: 2, value: get() ?? '', oninput: e => set(e.target.value, false), onchange: e => set(e.target.value, true) });
+      const vs = h('select', {}, ...varOptions());
+      vs.onchange = () => {
+        if (!vs.value) return;
+        const s = ta.selectionStart ?? ta.value.length, en = ta.selectionEnd ?? s;
+        ta.value = ta.value.slice(0, s) + vs.value + ta.value.slice(en);
+        ta.focus(); ta.selectionStart = ta.selectionEnd = s + vs.value.length;
+        set(ta.value, true); vs.value = '';
+      };
+      const clr = h('button', { class: 'icon', title: '変数で置き換え', onclick: () => { ta.value = ''; ta.focus(); } }, '×');
+      input = h('div', {}, ta, h('div', { class: 'varbar' }, vs, clr));
+      break;
+    }
+    case 'num':
+      input = h('input', { type: 'number', step: def.step || 1, value: get() ?? 0 });
+      if (def.min != null) input.min = def.min;
+      if (def.max != null) input.max = def.max;
+      input.oninput = e => { const v = parseFloat(e.target.value); if (!isNaN(v)) set(v, false); };
+      input.onchange = e => { const v = parseFloat(e.target.value); if (!isNaN(v)) set(v, true); };
+      input.dataset.key = key;
+      break;
+    case 'sel': {
+      input = selectEl(def.o, get());
+      input.onchange = e => { const v = e.target.value; set(isNaN(v) || v === '' ? v : +v, true); };
+      break;
+    }
+    case 'chk':
+      input = h('input', { type: 'checkbox', checked: !!get(), onchange: e => set(e.target.checked, true) }); break;
+    case 'font': {
+      const v = get() || 'Noto Sans JP';
+      const known = ALLFONTS.includes(v);
+      const s = h('select');
+      const g1 = h('optgroup', { label: 'Webフォント（どの環境でも同じ表示）' }), g2 = h('optgroup', { label: 'PCにインストール済みのフォント' });
+      for (const f of GFONTS) g1.append(h('option', { value: f[0] }, f[0]));
+      for (const f of SYSFONTS) g2.append(h('option', { value: f }, f));
+      s.append(g1, g2, h('option', { value: '__custom' }, 'その他（フォント名を入力）…'));
+      s.value = known ? v : '__custom';
+      const ci = h('input', { placeholder: '例: 新ゴ Pro M / ヒラギノ角ゴ', value: known ? '' : v, style: known ? 'display:none;margin-top:4px;width:100%' : 'margin-top:4px;width:100%' });
+      s.onchange = () => { if (s.value === '__custom') { ci.style.display = ''; ci.focus(); } else { ci.style.display = 'none'; set(s.value, true); } };
+      ci.onchange = () => { if (ci.value.trim()) set(ci.value.trim(), true); };
+      input = h('div', {}, s, ci);
+      break;
+    }
+    case 'color': {
+      const v = get();
+      const sel = selectEl([['fixed', '固定色'], ['@line', '路線色1（ラインカラー）'], ['@line2', '路線色2（サブカラー）'], ['@line3', '路線色3（ナンバリング色）'], ['none', 'なし（透明）']], (v === '@line' || v === '@line2' || v === '@line3' || v === 'none' || !v) ? (v || 'none') : 'fixed');
+      const ci = h('input', { type: 'color', value: /^#[0-9a-f]{6}$/i.test(v) ? v : col(v, st.data) === 'none' ? '#ffffff' : col(v, st.data) });
+      ci.disabled = sel.value !== 'fixed';
+      sel.onchange = () => { ci.disabled = sel.value !== 'fixed'; set(sel.value === 'fixed' ? ci.value : sel.value, true); };
+      ci.oninput = () => set(ci.value, false);
+      ci.onchange = () => set(ci.value, true);
+      input = h('div', { class: 'colorf' }, sel, ci);
+      break;
+    }
+    case 'cond': {
+      const v = get() || '';
+      const [mode, ref] = v ? v.split(':') : ['', 'prev.ja'];
+      const ms = selectEl([['', '常に表示'], ['has', '次の項目が入力されている時だけ'], ['empty', '次の項目が空の時だけ']], mode);
+      const fs = selectEl(fieldRefOptions(), ref || 'prev.ja');
+      fs.disabled = !mode;
+      const upd = () => { fs.disabled = !ms.value; set(ms.value ? `${ms.value}:${fs.value}` : '', true); };
+      ms.onchange = upd; fs.onchange = upd;
+      input = h('div', { style: 'display:flex;flex-direction:column;gap:4px' }, ms, fs,
+        h('div', { class: 'hint', style: 'margin:0' }, '例：「左の駅：駅名」が空なら左矢印を隠す（終着駅用）'));
+      break;
+    }
+  }
+  const row = h('label', { class: 'row' + (def.full || def.t === 'textarea' ? ' full' : '') + (def.t === 'chk' ? ' chk' : '') }, h('span', {}, def.l), input);
+  if (def.t === 'chk') { row.replaceChildren(input, h('span', { style: 'color:var(--text);font-size:12px' }, def.l)); row.style.alignSelf = 'end'; }
+  return row;
+}
+
+function renderProps() {
+  const body = $('#propsBody'); body.replaceChildren();
+  const el = selEl();
+  if (!el) { $('#propsHead').textContent = 'キャンバス設定'; renderCanvasProps(body); return; }
+  $('#propsHead').textContent = `${TYPE_LABEL[el.type]} のプロパティ`;
+  const ab = h('div', { class: 'btnrow', style: 'margin-top:0' },
+    h('button', { onclick: () => alignSel('h'), title: 'キャンバスの左右中央へ' }, '↔ 左右中央'),
+    h('button', { onclick: () => alignSel('v'), title: 'キャンバスの上下中央へ' }, '↕ 上下中央'),
+    h('button', { class: 'icon', onclick: () => alignSel('l'), title: '左端へ' }, '⇤'),
+    h('button', { class: 'icon', onclick: () => alignSel('r'), title: '右端へ' }, '⇥'),
+    h('button', { class: 'icon', onclick: () => alignSel('t'), title: '上端へ' }, '⤒'),
+    h('button', { class: 'icon', onclick: () => alignSel('b'), title: '下端へ' }, '⤓'));
+  body.append(ab);
+  for (const [legend, keys] of LAYOUT[el.type]) {
+    const fs = h('fieldset', {}, h('legend', {}, legend));
+    const grid = h('div', { class: 'grid2' });
+    for (const k of keys) {
+      if (k === 'points' && el.preset !== 'custom') continue;
+      const def = k === 'strokeWidth' && el.type === 'text' ? { ...P[k], l: '縁取りの太さ' } : P[k];
+      grid.append(makeField(def, () => el[k], (v, c) => {
+        el[k] = v;
+        if (k === 'preset' || k === 'name') { renderLayers(); }
+        if (k === 'preset') renderProps();
+        render(); if (c) commit();
+      }, k));
+    }
+    fs.append(grid); body.append(fs);
+  }
+  if (el.type === 'image') {
+    body.append(h('button', { onclick: () => { imageTarget = el.id; $('#imageFile').click(); } }, '画像を差し替え…'));
+  }
+  if (el.type === 'text') {
+    body.append(h('p', { class: 'hint' }, '「最大幅」を設定すると、長い駅名が自動で横に縮みます（緑の点線が最大幅）。右下の□をドラッグで文字サイズ変更。'));
+  }
+}
+function refreshPropValues() {
+  const el = selEl(); if (!el) return;
+  for (const inp of $$('#propsBody input[data-key]')) if (document.activeElement !== inp) inp.value = r2(el[inp.dataset.key]);
+}
+function renderCanvasProps(body) {
+  const t = st.tpl;
+  const grid = h('div', { class: 'grid2' });
+  const f = (def, k, after) => grid.append(makeField(def, () => t[k], (v, c) => { t[k] = v; after?.(); render(); if (c) commit(); }, k));
+  if (st.indiv) {
+    // 個別調整では大きさは全駅共通のまま（背景色だけ駅ごとに変更可）
+    f({ l: '背景色（この駅だけ）', t: 'color', full: 1 }, 'bg');
+    body.append(h('fieldset', {}, h('legend', {}, 'キャンバス'), grid),
+      h('p', { class: 'hint' }, 'キャンバスの大きさは全駅共通です。変更するには個別調整を終了してください。'));
+    return;
+  }
+  f({ l: '幅（単位）', t: 'num', min: 10 }, 'w');
+  f({ l: '高さ（単位）', t: 'num', min: 10 }, 'h');
+  f({ l: '印刷時の横幅 (mm)', t: 'num', min: 10 }, 'printW');
+  f({ l: 'グリッド間隔', t: 'num', min: 1 }, 'gridSize');
+  f({ l: '背景色', t: 'color', full: 1 }, 'bg');
+  body.append(h('fieldset', {}, h('legend', {}, 'キャンバス'), grid));
+  body.append(h('div', { class: 'btnrow' },
+    h('button', { onclick: () => { [t.w, t.h] = [1200, 400]; commit(); renderProps(); zoomFit(); } }, '3:1'),
+    h('button', { onclick: () => { [t.w, t.h] = [1200, 300]; commit(); renderProps(); zoomFit(); } }, '4:1'),
+    h('button', { onclick: () => { [t.w, t.h] = [1400, 350]; commit(); renderProps(); zoomFit(); } }, '4:1 大'),
+    h('button', { onclick: () => { [t.w, t.h] = [1000, 500]; commit(); renderProps(); zoomFit(); } }, '2:1')));
+  body.append(h('div', { class: 'hint' },
+    '要素をクリックで選択、ドラッグで移動。Shift+ドラッグで水平/垂直に固定。矢印キーで1ずつ（Shift併用で10ずつ）移動。',
+    h('br'), 'Ctrl+Z 元に戻す / Ctrl+D 複製 / Ctrl+C・V コピー＆貼り付け / Delete 削除 / Ctrl+ホイール 拡大縮小。'));
+}
+
+/* ================================================================
+   駅データフォーム
+   ================================================================ */
+function renderDataForm() {
+  const lf = $('#lineForm'); lf.replaceChildren();
+  for (const [k, l] of LINE_FIELDS) lf.append(h('label', { class: 'row' }, h('span', {}, l), h('input', { value: st.data.line[k] || '', oninput: e => { st.data.line[k] = e.target.value; dataChanged(); } })));
+  for (const [k, l] of [['color', '路線色1（ライン）'], ['color2', '路線色2（サブ）'], ['color3', '路線色3（ナンバリング）']]) {
+    lf.append(h('label', { class: 'row' }, h('span', {}, l), h('input', { type: 'color', value: st.data.line[k] || st.data.line.color, style: 'width:100%', oninput: e => { st.data.line[k] = e.target.value; dataChanged(); } })));
+  }
+  const sf = $('#stationForms'); sf.replaceChildren();
+  for (const [r, rl, c] of ROLES) {
+    sf.append(h('h3', {}, h('span', { class: 'sw', style: `background:${c}` }), rl, h('span', { class: 'hint', style: 'margin:0;font-weight:400' }, `{${r}.○○}`)));
+    const g = h('div', { class: 'grid2' });
+    for (const [k, l] of FIELDS) {
+      if (r !== 'cur' && ['zh', 'ko', 'area', 'note'].includes(k)) continue;
+      g.append(h('label', { class: 'row' + (k === 'ja' ? ' full' : '') }, h('span', {}, l),
+        h('input', { value: st.data[r][k] || '', 'data-role': r, 'data-field': k, oninput: e => { st.data[r][k] = e.target.value; dataChanged(); } })));
+    }
+    if (r !== 'cur') {
+      const more = h('details', { style: 'margin-top:4px' }, h('summary', { class: 'hint', style: 'cursor:pointer' }, 'その他の項目（中国語・韓国語など）'));
+      const g2 = h('div', { class: 'grid2' });
+      for (const [k, l] of FIELDS.filter(f => ['zh', 'ko', 'area', 'note'].includes(f[0])))
+        g2.append(h('label', { class: 'row' }, h('span', {}, l), h('input', { value: st.data[r][k] || '', oninput: e => { st.data[r][k] = e.target.value; dataChanged(); } })));
+      more.append(g2); g.append(h('div', { class: 'full', style: 'grid-column:1/-1' }, more));
+    }
+    sf.append(g);
+  }
+}
+function dataChanged() { render(); saveWork(); }
+$('#swapBtn').onclick = () => { [st.data.prev, st.data.next] = [st.data.next, st.data.prev]; renderDataForm(); dataChanged(); };
+$('#clearData').onclick = () => {
+  if (!confirm('駅データ（当駅・左右の駅）を空にしますか？')) return;
+  st.data.cur = blankStation(); st.data.prev = blankStation(); st.data.next = blankStation();
+  renderDataForm(); dataChanged();
+};
+
+/* ================================================================
+   テンプレート管理
+   ================================================================ */
+function renderTplPanel() {
+  $('#tplName').value = st.tpl.name || '';
+  const box = $('#tplList'); box.replaceChildren();
+  const tpls = getTemplates();
+  const names = Object.keys(tpls).sort((a, b) => a.localeCompare(b, 'ja'));
+  if (!names.length) box.append(h('div', { class: 'empty' }, 'まだ保存されていません。「名前を付けて保存」で保存できます。'));
+  for (const n of names) {
+    box.append(h('div', { class: 'item' },
+      h('span', { class: 'nm', title: n }, (n === st.tpl.name ? '● ' : '') + n),
+      h('button', { onclick: () => loadTemplate(tpls[n]) }, '読込'),
+      h('button', { class: 'danger', onclick: () => { if (confirm(`テンプレート「${n}」を削除しますか？`)) { const t = getTemplates(); delete t[n]; setTemplates(t); renderTplPanel(); } } }, '削除')));
+  }
+  const pb = $('#presetList'); pb.replaceChildren();
+  for (const p of PRESETS) {
+    const t = p();
+    pb.append(h('div', { class: 'item' }, h('span', { class: 'nm' }, t.name), h('button', { onclick: () => loadTemplate(p(), true) }, '読込')));
+  }
+}
+function loadTemplate(t, isPreset) {
+  exitIndiv(true);
+  if (!confirm(`「${t.name}」を読み込みます。現在のキャンバスの内容は置き換わります（保存していない変更は失われます）。`)) return;
+  st.tpl = normalizeTpl(clone(t));
+  if (isPreset) st.tpl.name = t.name + '（コピー）';
+  if (isPreset && t.sample && confirm('このプリセット用のサンプル駅データ（駅名・路線色）も読み込みますか？\n［キャンセル］で今の駅データのまま表示します。')) {
+    st.data = { line: { ...st.data.line, ...t.sample.line } };
+    for (const [r] of ROLES) st.data[r] = { ...blankStation(), ...(t.sample[r] || {}) };
+    renderDataForm(); saveWork();
+  }
+  st.sel = null; resetHistory(); fullRefresh(); zoomFit();
+}
+$('#tplName').oninput = e => { st.tpl.name = e.target.value; saveWork(); };
+$('#tplName').onchange = () => commit();
+function saveTemplateAs(name) {
+  if (st.indiv) { alert('個別調整中はテンプレートを保存できません。「終了してテンプレート編集に戻る」を押してから保存してください。'); return; }
+  name = (name || '').trim();
+  if (!name) return;
+  const tpls = getTemplates();
+  if (tpls[name] && name !== st.tpl.name && !confirm(`「${name}」は既にあります。上書きしますか？`)) return;
+  st.tpl.name = name;
+  tpls[name] = clone(st.tpl);
+  if (setTemplates(tpls)) { commit(); renderTplPanel(); flash(`テンプレート「${name}」を保存しました`); }
+}
+$('#tplSave').onclick = () => saveTemplateAs(st.tpl.name || prompt('テンプレート名', '新しいテンプレート'));
+$('#tplSaveAs').onclick = () => saveTemplateAs(prompt('テンプレート名を入力', st.tpl.name || '新しいテンプレート'));
+$('#tplNew').onclick = () => {
+  exitIndiv(true);
+  if (!confirm('白紙のキャンバスを作成します。保存していない変更は失われます。')) return;
+  st.tpl = normalizeTpl({ name: '新しいテンプレート', w: 1200, h: 400, printW: 900, bg: '#ffffff', elements: [] });
+  st.sel = null; resetHistory(); fullRefresh(); zoomFit();
+};
+$('#tplExport').onclick = () => download(`${st.tpl.name || 'template'}.ekimei.json`, JSON.stringify({ format: 'ekimei-template', version: 1, template: st.tpl }, null, 1));
+$('#tplExportAll').onclick = () => download('ekimei-templates.json', JSON.stringify({ format: 'ekimei-templates', version: 1, templates: Object.values(getTemplates()) }, null, 1));
+$('#tplImport').onclick = () => $('#tplImportFile').click();
+$('#tplImportFile').onchange = async e => {
+  const f = e.target.files[0]; e.target.value = '';
+  if (!f) return;
+  try {
+    const j = JSON.parse(await f.text());
+    const list = j.templates || (j.template ? [j.template] : j.elements ? [j] : []);
+    if (!list.length) throw new Error('テンプレートが見つかりません');
+    const tpls = getTemplates();
+    for (const t of list) { const n = normalizeTpl(t); tpls[n.name] = n; }
+    setTemplates(tpls); renderTplPanel();
+    if (list.length === 1 && confirm(`「${list[0].name}」を取り込みました。今すぐ開きますか？`)) { exitIndiv(true); st.tpl = normalizeTpl(list[0]); st.sel = null; resetHistory(); fullRefresh(); zoomFit(); }
+    else flash(`${list.length}件のテンプレートを取り込みました`);
+  } catch (err) { alert('読み込めませんでした：' + err.message); }
+};
+function flash(msg) { const s = $('#stSave'); s.textContent = msg; s.style.color = 'var(--acc)'; setTimeout(() => { s.style.color = ''; }, 2500); }
+
+/* ================================================================
+   一括作成
+   ================================================================ */
+/* 行ごとに { st: 駅データ, key: 個別調整の保存キー（駅名。重複時は「駅名#2」） } */
+function parseBatch() {
+  const seen = {};
+  return st.batch.split(/\r?\n/).map(l => l.trim()).filter(Boolean).map(l => {
+    const c = l.split(/\t|,|，/).map(s => s.trim());
+    const s = blankStation();
+    BATCH_COLS.forEach((k, i) => s[k] = c[i] || '');
+    const n = (seen[s.ja] = (seen[s.ja] || 0) + 1);
+    return { st: s, key: n > 1 ? `${s.ja}#${n}` : s.ja };
+  });
+}
+/* 個別調整を反映する前の、リストから自動で作ったデータ（順方向） */
+function autoData(rows, i) {
+  const n = rows.length, loop = st.batchLoop && n > 2;
+  const at = j => clone(loop ? rows[(j + n) % n].st : (rows[j]?.st || blankStation()));
+  return { line: clone(st.indiv ? st.indiv.baseData.line : st.data.line), cur: clone(rows[i].st), prev: at(i - 1), next: at(i + 1) };
+}
+function mergeData(base, ov) {
+  const d = clone(base);
+  for (const r of ['line', 'cur', 'prev', 'next']) if (ov?.[r]) Object.assign(d[r], ov[r]);
+  return d;
+}
+function dataDiff(a, b) {
+  const out = {};
+  for (const r of ['line', 'cur', 'prev', 'next']) {
+    const keys = new Set([...Object.keys(a[r] || {}), ...Object.keys(b[r] || {})]);
+    for (const k of keys) if ((a[r]?.[k] ?? '') !== (b[r]?.[k] ?? '')) (out[r] ||= {})[k] = b[r][k] ?? '';
+  }
+  return Object.keys(out).length ? out : null;
+}
+function tplDiff(base, work) {
+  const els = {}, ids = new Set(base.elements.map(e => e.id));
+  for (const b of base.elements) {
+    const w = work.elements.find(e => e.id === b.id);
+    if (!w) { els[b.id] = { hidden: true }; continue; }
+    const d = {};
+    for (const k of new Set([...Object.keys(b), ...Object.keys(w)])) if (JSON.stringify(b[k]) !== JSON.stringify(w[k])) d[k] = clone(w[k]);
+    if (Object.keys(d).length) els[b.id] = d;
+  }
+  const extra = clone(work.elements.filter(e => !ids.has(e.id)));
+  const order = work.elements.map(e => e.id);
+  const natural = [...base.elements.map(e => e.id).filter(id => order.includes(id)), ...extra.map(e => e.id)];
+  const ov = {};
+  if (Object.keys(els).length) ov.els = els;
+  if (extra.length) ov.extra = extra;
+  if (order.join() !== natural.join()) ov.order = order;
+  if (work.bg !== base.bg) ov.bg = work.bg;
+  return Object.keys(ov).length ? ov : null;
+}
+function applyTplOv(base, ov) {
+  if (!ov) return base;
+  const t = clone(base);
+  t.elements = t.elements.map(e => ov.els?.[e.id] ? { ...e, ...ov.els[e.id] } : e);
+  if (ov.extra) t.elements.push(...clone(ov.extra));
+  if (ov.order) { const pos = id => { const i = ov.order.indexOf(id); return i < 0 ? 1e9 : i; }; t.elements.sort((a, b) => pos(a.id) - pos(b.id)); }
+  if (ov.bg) t.bg = ov.bg;
+  return t;
+}
+const hasOv = ov => !!(ov && (ov.data || ov.tpl));
+/* 印刷・プレビュー用の一覧。各要素に _tpl（その駅用のテンプレート）が付く */
+function batchDataList(includeSkipped = false) {
+  syncIndiv();
+  const rows = parseBatch(), out = [];
+  const baseTpl = st.indiv ? st.indiv.baseTpl : st.tpl;
+  rows.forEach((r, i) => {
+    const ov = st.batchOv[r.key];
+    if (ov?.skip && !includeSkipped) return;
+    const fwd = mergeData(autoData(rows, i), ov?.data);
+    const tpl = applyTplOv(baseTpl, ov?.tpl);
+    const mark = d => Object.defineProperties(d, { _tpl: { value: tpl }, _row: { value: i } });
+    if (st.batchDir !== 'rev') out.push(mark(fwd));
+    if (st.batchDir !== 'fwd') out.push(mark({ ...fwd, prev: fwd.next, next: fwd.prev }));
+  });
+  return out;
+}
+function renderBatch() {
+  const rows = parseBatch();
+  const nOv = rows.filter(r => hasOv(st.batchOv[r.key])).length;
+  $('#batchCount').textContent = `${rows.length}駅 → ${batchDataList().length}枚` + (nOv ? `／個別調整 ${nOv}駅` : '');
+  $('#batchResetAll').style.display = Object.keys(st.batchOv).length ? '' : 'none';
+  const tb = $('#batchTable');
+  tb.replaceChildren(h('tr', {}, h('th', {}, '印刷'), h('th', {}, '駅名'), h('th', {}, '番号'), h('th', {})));
+  rows.forEach((r, i) => {
+    const s = r.st, ov = st.batchOv[r.key], cur = st.indiv?.key === r.key;
+    const chk = h('input', {
+      type: 'checkbox', checked: !ov?.skip, title: 'チェックを外すと一括印刷から除外', onchange: e => {
+        const o = (st.batchOv[r.key] ||= {});
+        if (e.target.checked) delete o.skip; else o.skip = true;
+        if (!Object.keys(o).length) delete st.batchOv[r.key];
+        renderBatch(); saveWork();
+      }
+    });
+    tb.append(h('tr', { style: cur ? 'background:#fff3cd' : ov?.skip ? 'opacity:.45' : '' },
+      h('td', { style: 'white-space:nowrap' }, chk, h('span', { class: 'hint' }, ` ${i + 1}`)),
+      h('td', {}, s.ja, hasOv(ov) ? h('span', { style: 'color:#b26a00;font-size:11px;margin-left:4px', title: '個別調整あり' }, '✎調整済') : null,
+        h('div', { class: 'hint', style: 'margin:0' }, s.en)),
+      h('td', {}, s.code + s.no),
+      h('td', { style: 'white-space:nowrap' },
+        h('button', { class: cur ? 'on' : '', title: 'この駅だけの文字・位置・隣駅・色を調整', onclick: () => enterIndiv(r.key) }, cur ? '調整中' : '個別調整'),
+        hasOv(ov) ? h('button', { class: 'icon danger', title: 'この駅の個別調整を削除', onclick: () => resetOv(r.key) }, '↺') : null)));
+  });
+}
+function resetOv(key) {
+  if (!confirm(`「${key}」の個別調整を削除して、テンプレートどおりに戻しますか？`)) return;
+  const skip = st.batchOv[key]?.skip;
+  const reopen = st.indiv?.key === key;
+  if (reopen) { st.indiv.noSync = true; exitIndiv(true); }
+  delete st.batchOv[key];
+  if (skip) st.batchOv[key] = { skip: true };
+  if (reopen) enterIndiv(key); else renderBatch();
+  saveWork();
+}
+
+/* ---- 個別調整モード：一括リストの1駅を通常の編集画面で調整し、テンプレートとの差分だけを保存 ---- */
+function enterIndiv(key) {
+  if (st.indiv) exitIndiv(true);
+  const rows = parseBatch(), i = rows.findIndex(r => r.key === key);
+  if (i < 0) return;
+  const ov = st.batchOv[key];
+  const auto = autoData(rows, i);
+  st.indiv = { key, baseTpl: st.tpl, baseData: st.data, auto };
+  st.tpl = clone(applyTplOv(st.indiv.baseTpl, ov?.tpl));
+  st.data = mergeData(auto, ov?.data);
+  st.sel = null; resetHistory(); renderDataForm(); fullRefresh(); updateIndivBar(); renderBatch();
+}
+function syncIndiv() {
+  const v = st.indiv;
+  if (!v || v.noSync) return;
+  const o = { ...(st.batchOv[v.key] || {}) };
+  delete o.tpl; delete o.data;
+  const t = tplDiff(v.baseTpl, st.tpl), d = dataDiff(v.auto, st.data);
+  if (t) o.tpl = t;
+  if (d) o.data = d;
+  if (Object.keys(o).length) st.batchOv[v.key] = o; else delete st.batchOv[v.key];
+}
+function exitIndiv(quiet) {
+  if (!st.indiv) return;
+  syncIndiv();
+  st.tpl = st.indiv.baseTpl; st.data = st.indiv.baseData; st.indiv = null;
+  st.sel = null;
+  if (!quiet) { resetHistory(); renderDataForm(); fullRefresh(); updateIndivBar(); renderBatch(); }
+}
+function stepIndiv(dir) {
+  const rows = parseBatch(), i = rows.findIndex(r => r.key === st.indiv?.key);
+  const r = rows[i + dir];
+  if (r) enterIndiv(r.key);
+}
+function updateIndivBar() {
+  const bar = $('#indivBar');
+  if (!st.indiv) { bar.style.display = 'none'; return; }
+  const rows = parseBatch(), i = rows.findIndex(r => r.key === st.indiv.key);
+  bar.style.display = 'flex';
+  $('#indivName').textContent = `${st.indiv.key}（${i + 1}/${rows.length}）`;
+  $('#indivPrev').disabled = i <= 0; $('#indivNext').disabled = i >= rows.length - 1;
+}
+$('#indivPrev').onclick = () => stepIndiv(-1);
+$('#indivNext').onclick = () => stepIndiv(1);
+$('#indivReset').onclick = () => st.indiv && resetOv(st.indiv.key);
+$('#indivExit').onclick = () => exitIndiv();
+$('#batchResetAll').onclick = () => {
+  if (!confirm('すべての駅の個別調整（印刷の除外も含む）を削除しますか？')) return;
+  if (st.indiv) { st.indiv.noSync = true; exitIndiv(); }
+  st.batchOv = {}; renderBatch(); saveWork();
+};
+$('#batchText').oninput = e => { st.batch = e.target.value; renderBatch(); updateIndivBar(); saveWork(); };
+$('#batchDir').onchange = e => { st.batchDir = e.target.value; renderBatch(); saveWork(); };
+$('#batchLoop').onchange = e => { st.batchLoop = e.target.checked; renderBatch(); saveWork(); };
+$('#batchPrint').onclick = () => openPrint('batch');
+
+/* ================================================================
+   印刷 / PDF
+   ================================================================ */
+const PAPERS = { A2: [420, 594], A3: [297, 420], A4: [210, 297], A5: [148, 210], B4: [257, 364], B5: [182, 257] };
+function printLayout() {
+  const p = st.print, t = st.tpl;
+  const sw = +t.printW, sh = sw * t.h / t.w;
+  if (p.mode === 'card') {
+    let [pw, ph] = PAPERS[p.paper] || PAPERS.A4;
+    if (p.orient === 'landscape') [pw, ph] = [ph, pw];
+    const cw = Math.max(5, +p.cardW || 91), ch = Math.max(5, +p.cardH || 55);
+    const cols = Math.max(1, Math.round(+p.cardCols || 1)), rows = Math.max(1, Math.round(+p.cardRows || 1));
+    const pad = Math.max(0, +p.cardPad || 0), aw = cw - 2 * pad, ah = ch - 2 * pad;
+    const s = Math.min(aw / sw, ah / sh);
+    const slots = [];
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++)
+      slots.push({ x: (+p.cardLeft || 0) + c * (cw + (+p.cardGapX || 0)), y: (+p.cardTop || 0) + r * (ch + (+p.cardGapY || 0)) });
+    return { pw, ph, sw, sh, cw, ch, cols, rows, slots, pad, aw, ah, dw: sw * s, dh: sh * s, scale: s, kind: 'card', perPage: cols * rows };
+  }
+  if (p.mode === 'tent' || p.mode === 'tent2') {
+    let [pw, ph] = PAPERS[p.paper] || PAPERS.A4;
+    if (p.orient === 'landscape') [pw, ph] = [ph, pw];
+    let fh, backY, frontY, folds, labels;
+    if (p.mode === 'tent') {
+      // 4等分：①裏面(180°回転) ②表面 ③底面 ④のりしろ
+      fh = ph / 4; backY = 0; frontY = fh; folds = [fh, 2 * fh, 3 * fh];
+      labels = [['③ 底面（机に接する面）', 2.5 * fh - 3, 4], ['点線はすべて山折り（印刷面が外側）', 2.5 * fh + 3, 3],
+        ['④ のりしろ — ①の裏側に貼り付けて三角柱にする', 3.5 * fh - 3, 4]];
+    } else {
+      // 上下のりしろ：のりしろ / 裏面(180°回転) / 表面 / のりしろ。上下ののりしろを重ねて貼り底面にする
+      const g = Math.min(Math.max(0, +p.tentGlue || 0), ph / 2 - 10);
+      fh = (ph - 2 * g) / 2; backY = g; frontY = g + fh; folds = [g, g + fh, g + 2 * fh];
+      labels = g >= 8 ? [['のりしろ', g / 2, Math.min(6, g / 3)], ['のりしろ', ph - g / 2, Math.min(6, g / 3)]] : [];
+    }
+    const pad = Math.max(0, +p.tentPad || 0);
+    const aw = pw - 2 * pad, ah = fh - 2 * pad;
+    const s = Math.min(aw / sw, ah / sh);
+    return { pw, ph, sw, sh, fh, backY, frontY, folds, labels, pad, aw, ah, dw: sw * s, dh: sh * s, scale: s, kind: 'tent', perPage: 1 };
+  }
+  if (p.paper === 'sign') return { pw: sw, ph: sh, sw, sh, kind: 'sign', perPage: 1 };
+  let [pw, ph] = PAPERS[p.paper];
+  if (p.orient === 'landscape') [pw, ph] = [ph, pw];
+  const m = Math.max(0, +p.margin || 0), aw = pw - 2 * m, ah = ph - 2 * m;
+  if (p.mode === 'actual') {
+    const cols = Math.ceil(sw / aw - 1e-6), rows = Math.ceil(sh / ah - 1e-6);
+    return { pw, ph, sw, sh, m, aw, ah, cols, rows, kind: 'tile', perPage: 1 / (cols * rows) };
+  }
+  if (p.mode === 'multi') {
+    // 横幅いっぱいに縮小せず、実寸のまま並べる（入らなければ幅に合わせて縮小）
+    const s = Math.min(1, aw / sw);
+    const dw = sw * s, dh = sh * s, gap = 4;
+    const rows = Math.max(1, Math.floor((ah + gap) / (dh + gap)));
+    return { pw, ph, sw, sh, m, aw, ah, dw, dh, gap, rows, kind: 'multi', perPage: rows, scale: s };
+  }
+  const s = Math.min(aw / sw, ah / sh);
+  return { pw, ph, sw, sh, m, aw, ah, dw: sw * s, dh: sh * s, kind: 'fit', perPage: 1, scale: s };
+}
+function signSvg(d, vb, tpl) {
+  const t = tpl || d._tpl || st.tpl; // 一括印刷では駅ごとの個別調整済みテンプレート
+  const s = mk('svg', { xmlns: SVGNS, viewBox: vb || `0 0 ${t.w} ${t.h}`, preserveAspectRatio: 'none' });
+  s.style.position = 'absolute'; s.style.display = 'block';
+  const g = mk('g'); buildSign(t, d, g, false); s.append(g);
+  return s;
+}
+function cropMarks(page, L, x, y, w, hgt) {
+  const s = mk('svg', { viewBox: `0 0 ${L.pw} ${L.ph}` });
+  s.style.cssText = `position:absolute;left:0;top:0;width:${L.pw}mm;height:${L.ph}mm;pointer-events:none`;
+  const a = { stroke: '#000', 'stroke-width': .15 }, o = 2, len = 6;
+  for (const [cx, cy, sx, sy] of [[x, y, -1, -1], [x + w, y, 1, -1], [x, y + hgt, -1, 1], [x + w, y + hgt, 1, 1]]) {
+    s.append(mk('line', { x1: cx + sx * o, y1: cy, x2: cx + sx * (o + len), y2: cy, ...a }));
+    s.append(mk('line', { x1: cx, y1: cy + sy * o, x2: cx, y2: cy + sy * (o + len), ...a }));
+  }
+  page.append(s);
+}
+/* 名刺・ラベルの切り取り線（mm座標のSVGに描く） */
+function cutLines(svg, x, y, w, hh, style) {
+  if (style === 'marks') {
+    const a = { stroke: '#000', 'stroke-width': .15 }, len = 4;
+    for (const [cx, cy, sx, sy] of [[x, y, 1, 1], [x + w, y, -1, 1], [x, y + hh, 1, -1], [x + w, y + hh, -1, -1]]) {
+      svg.append(mk('line', { x1: cx, y1: cy, x2: cx + sx * len, y2: cy, ...a }));
+      svg.append(mk('line', { x1: cx, y1: cy, x2: cx, y2: cy + sy * len, ...a }));
+    }
+    return;
+  }
+  svg.append(mk('rect', { x, y, width: w, height: hh, fill: 'none',
+    ...(style === 'solid' ? { stroke: '#333', 'stroke-width': .12 } : { stroke: '#9aa0a6', 'stroke-width': .2, 'stroke-dasharray': '1.5 1' }) }));
+}
+function place(svg, x, y, w, hh) { Object.assign(svg.style, { left: x + 'mm', top: y + 'mm', width: w + 'mm', height: hh + 'mm' }); }
+function buildPrintPages(list) {
+  const area = $('#printArea'); area.replaceChildren();
+  const L = printLayout(), t = st.tpl, p = st.print;
+  const newPage = () => { const pg = h('div', { class: 'page' }); pg.style.width = L.pw + 'mm'; pg.style.height = (L.ph - .2) + 'mm'; area.append(pg); return pg; };
+  if (L.kind === 'card') {
+    const per = L.slots.length;
+    let items;
+    if (p.cardRepeat === 'fill') items = Array(per).fill(list[0]);
+    else if (p.cardRepeat === 'sheet') items = list.flatMap(d => Array(per).fill(d));
+    else items = list;
+    // 開始位置より前の面は空ける（使いかけの用紙用）。全面埋める並べ方では使わない
+    const start = p.cardRepeat === 'list' ? Math.min(per, Math.max(1, Math.round(+p.cardStart || 1))) - 1 : 0;
+    const cells = [...Array(start).fill(null), ...items];
+    for (let i = 0; i < cells.length; i += per) {
+      const pg = newPage();
+      const under = mk('svg', { viewBox: `0 0 ${L.pw} ${L.ph}` }), over = mk('svg', { viewBox: `0 0 ${L.pw} ${L.ph}` });
+      for (const sv of [under, over]) sv.style.cssText = `position:absolute;left:0;top:0;width:${L.pw}mm;height:${L.ph}mm;pointer-events:none`;
+      pg.append(under);
+      cells.slice(i, i + per).forEach((d, j) => {
+        const { x, y } = L.slots[j];
+        if (p.cardGuide) cutLines(over, x, y, L.cw, L.ch, p.cardCutStyle);
+        if (!d) return;
+        const ft = d._tpl || t;
+        if (p.cardFill) under.append(mk('rect', { x, y, width: L.cw, height: L.ch, fill: col(ft.bg, d) }));
+        const sv = signSvg(d, null, ft);
+        place(sv, x + (L.cw - L.dw) / 2, y + (L.ch - L.dh) / 2, L.dw, L.dh);
+        pg.append(sv);
+      });
+      pg.append(over);
+    }
+  } else if (L.kind === 'tent') {
+    for (const d of list) {
+      const pg = newPage();
+      const under = mk('svg', { viewBox: `0 0 ${L.pw} ${L.ph}` }), over = mk('svg', { viewBox: `0 0 ${L.pw} ${L.ph}` });
+      for (const s of [under, over]) s.style.cssText = `position:absolute;left:0;top:0;width:${L.pw}mm;height:${L.ph}mm;pointer-events:none`;
+      pg.append(under);
+      const ft = d._tpl || t;
+      const face = (y0, data, rot) => {
+        if (p.tentFill) under.append(mk('rect', { x: 0, y: y0, width: L.pw, height: L.fh, fill: col(ft.bg, data) }));
+        const s = signSvg(data, null, ft);
+        place(s, (L.pw - L.dw) / 2, y0 + (L.fh - L.dh) / 2, L.dw, L.dh);
+        if (rot) { s.style.transform = 'rotate(180deg)'; s.style.transformOrigin = '50% 50%'; }
+        pg.append(s);
+      };
+      face(L.frontY, d, false);
+      if (p.tentBack !== 'none') face(L.backY, p.tentBack === 'swap' ? { ...d, prev: d.next, next: d.prev } : d, true);
+      // 折り線・ガイド
+      const g = { stroke: '#9aa0a6', 'stroke-width': .2, 'stroke-dasharray': '2 1.5' };
+      for (const y of L.folds) over.append(mk('line', { x1: 0, y1: y, x2: L.pw, y2: y, ...g }));
+      for (const [txt, y, size] of L.labels) {
+        const tx = mk('text', { x: L.pw / 2, y, 'font-size': size, 'font-weight': 700, 'text-anchor': 'middle', 'dominant-baseline': 'central', fill: '#9aa0a6', 'font-family': 'sans-serif' });
+        tx.textContent = txt; over.append(tx);
+      }
+      pg.append(over);
+    }
+  } else if (L.kind === 'multi') {
+    for (let i = 0; i < list.length; i += L.rows) {
+      const pg = newPage();
+      const x = (L.pw - L.dw) / 2;
+      let y = L.m + (L.ah - (L.rows * L.dh + (L.rows - 1) * L.gap)) / 2;
+      for (const d of list.slice(i, i + L.rows)) {
+        const s = signSvg(d); place(s, x, y, L.dw, L.dh); pg.append(s);
+        if (p.crop) cropMarks(pg, L, x, y, L.dw, L.dh);
+        y += L.dh + L.gap;
+      }
+    }
+  } else {
+    for (const d of list) {
+      if (L.kind === 'sign') {
+        const pg = newPage(); const s = signSvg(d); place(s, 0, 0, L.sw, L.sh); pg.append(s);
+      } else if (L.kind === 'fit') {
+        const pg = newPage(); const x = (L.pw - L.dw) / 2, y = (L.ph - L.dh) / 2;
+        const s = signSvg(d); place(s, x, y, L.dw, L.dh); pg.append(s);
+        if (p.crop) cropMarks(pg, L, x, y, L.dw, L.dh);
+      } else {
+        const k = t.w / L.sw;
+        for (let r = 0; r < L.rows; r++) for (let c = 0; c < L.cols; c++) {
+          const pg = newPage();
+          const rx = c * L.aw, ry = r * L.ah, rw = Math.min(L.aw, L.sw - rx), rh = Math.min(L.ah, L.sh - ry);
+          const s = signSvg(d, `${rx * k} ${ry * k} ${rw * k} ${rh * k}`);
+          place(s, L.m, L.m, rw, rh); pg.append(s);
+          if (p.crop) cropMarks(pg, L, L.m, L.m, rw, rh);
+          const lab = h('div', {}, `${d.cur.ja || ''}  [${r + 1}行-${c + 1}列 / ${L.rows}×${L.cols}]`);
+          lab.style.cssText = `position:absolute;left:${L.m}mm;bottom:${Math.max(1, L.m / 2 - 2)}mm;font-size:7pt;color:#666;font-family:sans-serif`;
+          pg.append(lab);
+        }
+      }
+    }
+  }
+  $('#pageStyle').textContent = `@page{size:${r2(L.pw)}mm ${r2(L.ph)}mm;margin:0}`;
+  return area.children.length;
+}
+async function loadFontsFor(list) {
+  // フォント＋太さごとに、実際に使う文字をまとめて読み込む（駅ごとの個別調整も含む）
+  const need = new Map();
+  for (const d of list) for (const el of (d._tpl || st.tpl).elements) {
+    if (el.type !== 'text') continue;
+    const key = `${el.italic ? 'italic ' : ''}${el.weight} 32px "${el.font}"`;
+    need.set(key, (need.get(key) || '') + resolveText(el.text, d));
+  }
+  const jobs = [...need].map(([font, txt]) => document.fonts.load(font, [...new Set(txt)].join('') || 'A').catch(() => { }));
+  await Promise.race([Promise.all(jobs), new Promise(r => setTimeout(r, 8000))]);
+  await document.fonts.ready;
+}
+function printList() { return st.print.target === 'batch' ? batchDataList() : [st.data]; }
+function updatePrintInfo() {
+  const L = printLayout(), list = printList();
+  $('#prHeight').value = r2(L.sh);
+  let pages = L.kind === 'tile' ? list.length * L.cols * L.rows : L.kind === 'multi' ? Math.ceil(list.length / L.rows) : list.length;
+  const card = L.kind === 'card';
+  if (card) {
+    const per = L.slots.length, rep = st.print.cardRepeat;
+    const start = rep === 'list' ? Math.min(per, Math.max(1, Math.round(+st.print.cardStart || 1))) - 1 : 0;
+    pages = rep === 'fill' ? 1 : rep === 'sheet' ? list.length : Math.ceil((start + list.length) / per);
+  }
+  let msg = `駅名標 ${list.length}枚 → 用紙 ${r2(L.pw)}×${r2(L.ph)}mm を ${pages}ページ。`;
+  if (L.kind === 'fit') msg += ` 印刷サイズ ${r2(L.dw)}×${r2(L.dh)}mm（実寸の${Math.round(L.scale * 100)}%）`;
+  if (L.kind === 'multi') msg += ` 1ページに${L.rows}枚（${r2(L.dw)}×${r2(L.dh)}mm）`;
+  if (L.kind === 'tile') msg += ` 1枚を ${L.rows}×${L.cols} に分割（貼り合わせ用）`;
+  if (card) {
+    const p = st.print, last = L.slots[L.slots.length - 1];
+    const right = r2(L.pw - (last.x + L.cw)), bottom = r2(L.ph - (last.y + L.ch));
+    const ratio = r2(L.aw / L.ah), cur = r2(L.sw / L.sh);
+    msg = `${p.cardRepeat === 'fill' ? 1 : list.length}駅 → ${pages}ページ（1枚に${L.slots.length}面）。駅名標は1面あたり ${r2(L.dw)}×${r2(L.dh)}mm で印刷。`;
+    $('#cardInfo').innerHTML = `右余白 ${right}mm・下余白 ${bottom}mm` + (right < -0.05 || bottom < -0.05 ? ' <b style="color:#c0392b">⚠ 用紙からはみ出しています</b>' : '')
+      + `<br>面の縦横比は <b>${ratio}:1</b>、今のキャンバスは ${cur}:1 です。`
+      + (Math.abs(ratio - cur) / ratio > .15 ? `${ratio > cur ? '左右' : '上下'}に余白ができます。面いっぱいにするにはキャンバスを ${ratio}:1 にしてください（例：幅 ${Math.round(st.tpl.h * ratio)} × 高さ ${st.tpl.h}）。` : '')
+      + '<br>印刷ダイアログでは「倍率：100%（実際のサイズ）」「余白：なし」を選ぶと、名刺用紙の枠にぴったり合います。';
+  }
+  $('#cardOpts').style.display = card ? '' : 'none';
+  const tent = L.kind === 'tent';
+  if (tent) {
+    const ratio = r2(L.aw / L.ah), cur = r2(L.sw / L.sh);
+    msg = `${list.length}駅 → ${list.length}ページ。1面 ${r2(L.pw)}×${r2(L.fh)}mm、駅名標は ${r2(L.dw)}×${r2(L.dh)}mm で印刷。`;
+    const t2 = st.print.mode === 'tent2';
+    if (t2) {
+      const g = r2((L.ph - 2 * L.fh) / 2);
+      if (document.activeElement !== $('#prTentGlue')) $('#prTentGlue').value = g;
+      if (document.activeElement !== $('#prTentFace')) $('#prTentFace').value = r2(L.fh);
+    }
+    for (const n of $$('.tent2only')) n.style.display = t2 ? '' : 'none';
+    $('#tentDiagram').innerHTML = (t2
+      ? `上から <b>のりしろ／裏面（上下逆さ）／表面／のりしろ</b> の順に配置します。真ん中の折り目が三角の頂点になり、上下ののりしろを重ねて貼ると底面になります。<br>`
+      : `用紙を横方向の折り目で4等分し、①裏面（上下逆さに印刷）②表面 ③底面 ④のりしろ の順に配置します。<br>`)
+      + `面の縦横比は <b>${ratio}:1</b>、今のキャンバスは ${cur}:1 です。`
+      + (Math.abs(ratio - cur) / ratio > .15 ? `<br>${ratio > cur ? '左右' : '上下'}に余白ができます。キャンバスを ${ratio}:1 にするか、用紙の向きを変えると面いっぱいになります（A4縦＝約2.8:1、A4横＝約5.7:1）。` : '');
+  }
+  $('#tentOpts').style.display = tent ? '' : 'none';
+  $('#prCropRow').style.display = tent || card ? 'none' : '';
+  $('#prInfo').textContent = msg;
+  const disabled = st.print.paper === 'sign' && !tent && !card;
+  $('#prOrient').disabled = $('#prMargin').disabled = $('#prCrop').disabled = disabled;
+  $('#prMargin').disabled ||= tent || card;
+}
+function openPrint(target) {
+  const p = st.print;
+  if (target) p.target = target;
+  $('#prTarget').value = p.target; $('#prPaper').value = p.paper; $('#prOrient').value = p.orient;
+  $('#prMode').value = p.mode; $('#prMargin').value = p.margin; $('#prCrop').checked = p.crop;
+  $('#prWidth').value = st.tpl.printW;
+  $('#prTentBack').value = p.tentBack; $('#prTentPad').value = p.tentPad; $('#prTentFill').checked = p.tentFill;
+  syncCardInputs();
+  updatePrintInfo();
+  $('#printDlg').showModal();
+}
+for (const [id, k, conv] of [['#prTarget', 'target'], ['#prPaper', 'paper'], ['#prOrient', 'orient'], ['#prMode', 'mode'], ['#prMargin', 'margin', Number]]) {
+  $(id).addEventListener('input', e => { st.print[k] = conv ? conv(e.target.value) : e.target.value; updatePrintInfo(); saveWork(); });
+}
+$('#prCrop').onchange = e => { st.print.crop = e.target.checked; saveWork(); };
+$('#prMode').addEventListener('change', e => {
+  // 三角柱を選んだら A4縦 を初期値に（3:1前後の駅名標がちょうど収まる）
+  if (e.target.value === 'card' && (st.print.paper !== 'A4' || st.print.orient !== 'portrait')) {
+    st.print.paper = 'A4'; st.print.orient = 'portrait';
+    $('#prPaper').value = 'A4'; $('#prOrient').value = 'portrait'; updatePrintInfo();
+  }
+  if ((e.target.value === 'tent' || e.target.value === 'tent2') && st.print.paper === 'sign') {
+    st.print.paper = 'A4'; st.print.orient = 'portrait';
+    $('#prPaper').value = 'A4'; $('#prOrient').value = 'portrait'; updatePrintInfo();
+  }
+});
+$('#prTentBack').onchange = e => { st.print.tentBack = e.target.value; saveWork(); };
+$('#prTentPad').oninput = e => { st.print.tentPad = +e.target.value || 0; updatePrintInfo(); saveWork(); };
+$('#prTentFill').onchange = e => { st.print.tentFill = e.target.checked; saveWork(); };
+const CARD_FIELDS = [['#cdW', 'cardW'], ['#cdH', 'cardH'], ['#cdCols', 'cardCols'], ['#cdRows', 'cardRows'], ['#cdLeft', 'cardLeft'], ['#cdTop', 'cardTop'], ['#cdGapX', 'cardGapX'], ['#cdGapY', 'cardGapY'], ['#cdPad', 'cardPad'], ['#cdStart', 'cardStart']];
+function syncCardInputs() {
+  const p = st.print;
+  for (const [id, k] of CARD_FIELDS) $(id).value = p[k];
+  $('#cdRepeat').value = p.cardRepeat; $('#cdFill').checked = p.cardFill; $('#cdGuide').checked = p.cardGuide;
+  $('#cdCutStyle').value = p.cardCutStyle || 'dash'; $('#cdCutRow').style.display = p.cardGuide ? '' : 'none';
+  const cur = [p.cardW, p.cardH, p.cardCols, p.cardRows, p.cardLeft, p.cardTop, p.cardGapX, p.cardGapY].join(',');
+  $('#cdPreset').value = [...$('#cdPreset').options].some(o => o.value === cur) ? cur : '';
+}
+for (const [id, k] of CARD_FIELDS) $(id).oninput = e => { const v = parseFloat(e.target.value); if (!isNaN(v)) { st.print[k] = v; syncCardInputs(); updatePrintInfo(); saveWork(); } };
+$('#cdPreset').onchange = e => {
+  if (!e.target.value) return;
+  const v = e.target.value.split(',').map(Number);
+  ['cardW', 'cardH', 'cardCols', 'cardRows', 'cardLeft', 'cardTop', 'cardGapX', 'cardGapY'].forEach((k, i) => st.print[k] = v[i]);
+  st.print.paper = 'A4'; st.print.orient = 'portrait'; $('#prPaper').value = 'A4'; $('#prOrient').value = 'portrait';
+  syncCardInputs(); updatePrintInfo(); saveWork();
+};
+$('#cdRepeat').onchange = e => { st.print.cardRepeat = e.target.value; updatePrintInfo(); saveWork(); };
+$('#cdFill').onchange = e => { st.print.cardFill = e.target.checked; saveWork(); };
+$('#cdGuide').onchange = e => { st.print.cardGuide = e.target.checked; syncCardInputs(); saveWork(); };
+$('#cdCutStyle').onchange = e => { st.print.cardCutStyle = e.target.value; saveWork(); };
+$('#prTentGlue').oninput = e => { st.print.tentGlue = Math.max(0, +e.target.value || 0); updatePrintInfo(); saveWork(); };
+$('#prTentFace').oninput = e => {
+  const f = +e.target.value; if (!(f > 0)) return;
+  const L = printLayout();
+  st.print.tentGlue = Math.max(0, r2((L.ph - 2 * f) / 2)); updatePrintInfo(); saveWork();
+};
+$('#prWidth').oninput = e => { const v = +e.target.value; if (v > 0) { st.tpl.printW = v; if (st.indiv) st.indiv.baseTpl.printW = v; updatePrintInfo(); render(); } };
+$('#prWidth').onchange = () => commit();
+$('#prCancel').onclick = () => $('#printDlg').close();
+$('#prGo').onclick = async () => {
+  const list = printList();
+  if (!list.length) { alert('印刷する駅がありません。一括作成タブに駅リストを入力してください。'); return; }
+  const btn = $('#prGo'); btn.disabled = true; btn.textContent = 'フォント読込中…';
+  try {
+    buildPrintPages(list);
+    await loadFontsFor(list);
+    buildPrintPages(list); // フォント読込後に文字幅を再計算
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    $('#printDlg').close();
+    window.print();
+  } finally { btn.disabled = false; btn.textContent = '印刷 / PDF保存'; }
+};
+window.addEventListener('afterprint', () => { $('#printArea').replaceChildren(); });
+$('#printBtn').onclick = () => openPrint();
+
+/* SVG書き出し */
+$('#svgBtn').onclick = () => {
+  const t = st.tpl;
+  const s = mk('svg', { xmlns: SVGNS, viewBox: `0 0 ${t.w} ${t.h}`, width: `${t.printW}mm`, height: `${r2(t.printW * t.h / t.w)}mm` });
+  const g = mk('g'); buildSign(t, st.data, g, false); s.append(g);
+  download(`${st.data.cur.ja || 'sign'}.svg`, '<?xml version="1.0" encoding="UTF-8"?>\n' + new XMLSerializer().serializeToString(s), 'image/svg+xml');
+};
+
+/* ================================================================
+   ツールバー・キーボード
+   ================================================================ */
+for (const b of $$('[data-add]')) b.onclick = () => addElement(b.dataset.add);
+const shapeMenu = $('#shapeMenu');
+for (const [k, [label, pts]] of Object.entries(SHAPES)) {
+  if (!pts) continue;
+  const sv = mk('svg', { viewBox: '-2 -2 104 104', width: 26, height: 26 });
+  sv.append(mk('polygon', { points: pts.map(([x, y]) => `${x * 100},${y * 100}`).join(' '), fill: '#333' }));
+  const b = h('button', { title: label, onclick: () => { $('#shapeDrop').classList.remove('open'); addElement('shape', { preset: k, name: label }); } });
+  b.append(sv); shapeMenu.append(b);
+}
+shapeMenu.append(h('button', { title: 'カスタム（頂点を数値で指定）', onclick: () => { $('#shapeDrop').classList.remove('open'); addElement('shape', { preset: 'custom', name: 'カスタム図形' }); } }, '✎'));
+$('#shapeBtn').onclick = e => { e.stopPropagation(); $('#shapeDrop').classList.toggle('open'); };
+document.addEventListener('click', e => { if (!e.target.closest('#shapeDrop')) $('#shapeDrop').classList.remove('open'); });
+
+let imageTarget = null;
+$('#addImage').onclick = () => { imageTarget = null; $('#imageFile').click(); };
+$('#imageFile').onchange = e => {
+  const f = e.target.files[0]; e.target.value = '';
+  if (!f) return;
+  if (f.size > 1.5e6 && !confirm('画像が大きいため、テンプレートの保存容量を圧迫する可能性があります。続けますか？')) return;
+  const rd = new FileReader();
+  rd.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      const tgt = imageTarget && findEl(imageTarget);
+      if (tgt) { tgt.href = rd.result; commit(); render(); return; }
+      const hh = Math.min(200, st.tpl.h * .6), w = Math.round(hh * img.width / img.height);
+      addElement('image', { href: rd.result, w, h: Math.round(hh), name: f.name.replace(/\.[^.]+$/, '') });
+    };
+    img.src = rd.result;
+  };
+  rd.readAsDataURL(f);
+};
+$('#undoBtn').onclick = undo; $('#redoBtn').onclick = redo;
+$('#zoomIn').onclick = () => zoomBy(1.2); $('#zoomOut').onclick = () => zoomBy(1 / 1.2); $('#zoomFit').onclick = zoomFit;
+$('#gridBtn').onclick = () => { st.grid = !st.grid; render(); saveWork(); };
+$('#snapBtn').onclick = () => { st.snap = !st.snap; render(); saveWork(); };
+$('#lyUp').onclick = () => reorder(1); $('#lyDown').onclick = () => reorder(-1);
+$('#lyDup').onclick = () => duplicateSel(); $('#lyDel').onclick = deleteSel;
+
+let clipboard = null;
+document.addEventListener('keydown', e => {
+  const tag = document.activeElement?.tagName;
+  const typing = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || $('#printDlg').open;
+  const mod = e.ctrlKey || e.metaKey;
+  if (mod && e.key.toLowerCase() === 's') { e.preventDefault(); $('#tplSave').click(); return; }
+  if (mod && e.key.toLowerCase() === 'p') { e.preventDefault(); openPrint(); return; }
+  if (typing) return;
+  if (mod && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
+  if (mod && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); return; }
+  const el = selEl();
+  if (mod && e.key.toLowerCase() === 'c' && el) { clipboard = clone(el); return; }
+  if (mod && e.key.toLowerCase() === 'v' && clipboard) { e.preventDefault(); const c = { ...clone(clipboard), id: uid() }; moveBy(c, 10, 10); clipboard = clone(c); st.tpl.elements.push(c); commit(); select(c.id); return; }
+  if (!el) return;
+  if (mod && e.key.toLowerCase() === 'd') { e.preventDefault(); duplicateSel(); return; }
+  if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); deleteSel(); return; }
+  if (e.key === 'Escape') { select(null); return; }
+  const step = e.shiftKey ? 10 : 1;
+  const mv = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key];
+  if (mv) { e.preventDefault(); moveBy(el, ...mv); render(); refreshPropValues(); clearTimeout(nudgeT); nudgeT = setTimeout(commit, 400); }
+});
+let nudgeT = 0;
+
+/* タブ */
+for (const b of $$('.tabs button')) b.onclick = () => {
+  $$('.tabs button').forEach(x => x.classList.toggle('active', x === b));
+  $$('.tabpane').forEach(p => p.classList.toggle('active', p.id === 'tab-' + b.dataset.tab));
+  if (b.dataset.tab === 'tpl') renderTplPanel();
+  if (b.dataset.tab === 'batch') renderBatch();
+};
+
+/* フォント読込完了時に再描画（文字幅の再計算） */
+document.fonts.addEventListener('loadingdone', () => render());
+
+function fullRefresh() { renderLayers(); renderProps(); renderTplPanel(); render(); }
+
+/* ================================================================
+   起動
+   ================================================================ */
+(function init() {
+  const w = loadJSON(KEY_WORK, null);
+  if (w && w.tpl) {
+    st.tpl = normalizeTpl(w.tpl);
+    if (w.data) { st.data = { ...clone(DEFAULT_DATA), ...w.data }; for (const [r] of ROLES) st.data[r] = { ...blankStation(), ...(w.data[r] || {}) }; }
+    if (typeof w.batch === 'string') st.batch = w.batch;
+    if (w.print) Object.assign(st.print, w.print);
+    st.grid = !!w.grid; st.snap = w.snap !== false;
+    st.batchDir = w.batchDir || 'fwd'; st.batchLoop = !!w.batchLoop;
+    st.batchOv = w.batchOv && typeof w.batchOv === 'object' ? w.batchOv : {};
+  } else {
+    st.tpl = normalizeTpl(PRESETS[0]());
+  }
+  $('#batchText').value = st.batch;
+  $('#batchDir').value = st.batchDir;
+  $('#batchLoop').checked = st.batchLoop;
+  renderDataForm();
+  resetHistory();
+  fullRefresh();
+  requestAnimationFrame(zoomFit);
+  window.addEventListener('resize', () => { clearTimeout(window._rz); window._rz = setTimeout(zoomFit, 150); });
+})();
+</script>
+</body>
+</html>
